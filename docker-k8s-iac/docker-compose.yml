@@ -1,0 +1,25 @@
+services:
+  registry:
+    image: registry:2
+    container_name: registry
+    restart: unless-stopped
+    ports:
+      - "${REGISTRY_BIND_ADDRESS:-0.0.0.0}:5000:5000"
+    environment:
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+
+  registry-ui:
+    image: joxit/docker-registry-ui:2.5.7
+    container_name: registry-ui
+    restart: unless-stopped
+    depends_on:
+      - registry
+    ports:
+      - "${UI_BIND_ADDRESS:-127.0.0.1}:8081:80"
+    environment:
+      - SINGLE_REGISTRY=true
+      - REGISTRY_TITLE=${REGISTRY_TITLE:-Remote Docker Registry}
+      - REGISTRY_URL=${REGISTRY_UI_URL:-http://myserver:8081}
+      - NGINX_PROXY_PASS_URL=http://registry:5000
+      - NGINX_RESOLVER=127.0.0.11
+      - PULL_URL=${IMAGE_REGISTRY:-myserver:5000}
