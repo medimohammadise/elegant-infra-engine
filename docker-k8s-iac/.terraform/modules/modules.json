@@ -1,0 +1,1 @@
+{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"k8s-resources","Source":"./modules/k8s-resources","Dir":"modules/k8s-resources"},{"Key":"kind-cluster","Source":"./modules/kind-cluster","Dir":"modules/kind-cluster"},{"Key":"pre-k8s","Source":"./modules/pre-k8s","Dir":"modules/pre-k8s"}]}

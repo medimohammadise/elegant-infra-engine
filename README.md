@@ -1,66 +1,15 @@
 # BlitzInfra
 
-This repository contains the infrastructure bootstrap scripts under `docker-k8s-iac/`.
-
-## Bootstrap Infra
+This repository contains the infrastructure configuration for provisioning a Docker registry, a UI, and a 5-node remote Kubernetes (`kind`) cluster over SSH, along with required namespaces and the Kubernetes Dashboard using Terraform.
 
 ## Prerequisites
 
-- SSH access to the Docker host used by `DOCKER_CONTEXT`
-- `docker`, `kubectl`, `curl`, `ssh`, and `scp` installed locally
-- Docker Compose support via `docker compose` or `docker-compose`
-- `docker` and `kind` installed on the remote host if you want Kubernetes provisioning
-- If your local Docker config references a missing credential helper such as `docker-credential-desktop`, the scripts fall back to a temporary clean Docker config for public image pulls
+- SSH access to the remote host (e.g. `myserver`) where Docker is running.
+- `docker`, `ssh`, and `scp` installed locally.
+- `terraform` CLI installed locally.
+- passwordless SSH setup to the remote host (e.g., using `ssh-copy-id myserver`).
 
-Example checks:
-
-```bash
-curl http://myserver:5000/v2/
-docker context ls
-kubectl config get-contexts
-```
-
-If the Docker context does not exist yet, `bootstrap.sh` creates it automatically from `.env`:
-
-```env
-DOCKER_CONTEXT=myserver
-DOCKER_CONTEXT_HOST=myserver
-DOCKER_CONTEXT_USER=mehdi
-```
-
-That is equivalent to:
-
-```bash
-docker context create myserver --docker "host=ssh://mehdi@myserver"
-```
-
-If passwordless SSH is not ready yet, `bootstrap.sh` runs:
-
-```bash
-./scripts/setup-ssh-access.sh
-```
-
-That script:
-
-- creates an SSH key if you do not already have one
-- prompts once for the remote account password
-- installs your public key on the remote host with `ssh-copy-id`
-- verifies passwordless SSH before continuing
-
-If the Kubernetes context does not exist yet, run:
-
-```bash
-./scripts/provision-kind-cluster.sh
-```
-
-That script provisions a remote `kind` cluster with 5 nodes total:
-
-- 1 control-plane node
-- 4 worker nodes
-- Kubernetes API exposed on `${KIND_API_SERVER_HOST}:${KIND_API_SERVER_PORT}`
-- local `kubectl` context imported as `KUBE_CONTEXT`
-
-If the context is not reachable and `KUBE_REQUIRED=false`, bootstrap skips the namespace apply step.
+## Setup
 
 1. Move into the infra directory:
 
@@ -68,81 +17,65 @@ If the context is not reachable and `KUBE_REQUIRED=false`, bootstrap skips the n
 cd docker-k8s-iac
 ```
 
-2. Create your environment file from the example:
+2. Create your terraform variables file from the example:
 
 ```bash
-cp .env.example .env
+cp terraform.tfvars.example terraform.tfvars
 ```
 
-3. Update `.env` with the values for your server and cluster:
+3. Update `terraform.tfvars` with the values for your server:
 
-```env
-REGISTRY_URL=http://myserver:5000
-REGISTRY_PROXY_PASS_URL=http://myserver:5000
-REGISTRY_TITLE="Remote Docker Registry"
-REGISTRY_BIND_ADDRESS=0.0.0.0
-UI_BIND_ADDRESS=127.0.0.1
-DOCKER_CONTEXT=myserver
-DOCKER_CONTEXT_HOST=myserver
-DOCKER_CONTEXT_USER=mehdi
-KUBE_CONTEXT=myserver
-KUBE_REQUIRED=false
-KUBE_NAMESPACE=BlitzPay-DEV
-KIND_CLUSTER_NAME=blitzinfra
-KIND_WORKER_COUNT=4
-KIND_API_SERVER_PORT=6443
-KIND_API_SERVER_HOST=myserver
-KIND_WAIT_DURATION=300s
-KIND_PROVISION_ON_BOOTSTRAP=false
-IMAGE_REGISTRY=myserver:5000
-IMAGE_NAME=sample-app
-IMAGE_TAG=latest
+```hcl
+ssh_context_host      = "myserver"
+api_server_host       = "myserver"
+registry_bind_address = "0.0.0.0"
+ui_bind_address       = "127.0.0.1"
+registry_title        = "Remote Docker Registry"
+cluster_name          = "blitzinfra"
+worker_count          = 4
+kube_namespace        = "blitzpay-dev"
 ```
 
-4. Make sure the scripts are executable if needed:
+## Provisioning
+
+Initialize Terraform to download required providers:
 
 ```bash
-chmod +x scripts/*.sh
+terraform init
 ```
 
-5. Run the infra bootstrap command:
+Review the execution plan:
 
 ```bash
-./scripts/bootstrap.sh
+DOCKER_HOST=ssh://myserver terraform plan
 ```
 
-This bootstrap script runs the following steps:
-
-- validates required local commands and Kubernetes context
-- creates the Docker context from `.env` if it is missing
-- optionally provisions the remote `kind` cluster when `KIND_PROVISION_ON_BOOTSTRAP=true`
-- ensures the remote `registry` container is running on port `5000`
-- waits for the remote registry health endpoint to respond
-- starts `registry-ui` with Docker Compose on the remote Docker context
-- applies the Kubernetes namespace from `k8s/namespace.yaml` when the configured cluster is reachable
-
-## Optional Commands
-
-Build and push an image:
+Apply the changes to provision the infrastructure:
 
 ```bash
-./scripts/build-and-push.sh .
+DOCKER_HOST=ssh://myserver terraform apply
 ```
 
-Start the remote registry and UI:
+> **Note**: The `DOCKER_HOST` environment variable is required so that the `kind` CLI plugin inside the provider can communicate with the remote Docker daemon natively to build the cluster.
+
+## What it Does
+
+When you apply the Terraform configuration, it systematically modules through:
+1. `pre-k8s`: Creates the Docker Registry and Registry UI natively with Docker containers on the remote host.
+2. `kind-cluster`: Provisions a 5-node `kind` cluster on the remote host and fetches the kubeconfig.
+3. `k8s-resources`: Uses the cluster output to set up the `blitzpay-dev` namespace and deploys the `kubernetes-dashboard` via Helm.
+
+## Access Kubernetes Dashboard
+
+The dashboard is installed via Helm automatically. Start a local proxy:
 
 ```bash
-./scripts/compose-up-remote.sh
+kubectl port-forward svc/kubernetes-dashboard -n kubernetes-dashboard 8443:443
 ```
 
-Provision the remote 5-node `kind` cluster:
+Then open `https://localhost:8443` and create a login token with:
 
 ```bash
-./scripts/provision-kind-cluster.sh
+kubectl -n kubernetes-dashboard create token admin-user
 ```
 
-Apply the Kubernetes namespace only:
-
-```bash
-./scripts/apply-namespace.sh
-```
