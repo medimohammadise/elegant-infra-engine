@@ -2,8 +2,13 @@
 
 output "kubeconfig" {
   description = "The kubeconfig of the kind cluster"
-  value       = kind_cluster.default.kubeconfig
+  value       = local_sensitive_file.kubeconfig.content
   sensitive   = true
+}
+
+output "kubeconfig_path" {
+  description = "Path to the corrected kubeconfig file for the kind cluster"
+  value       = local_sensitive_file.kubeconfig.filename
 }
 
 output "cluster_name" {
@@ -12,8 +17,8 @@ output "cluster_name" {
 }
 
 output "endpoint" {
-  description = "The endpoint of the API Server"
-  value       = kind_cluster.default.endpoint
+  description = "The reachable endpoint of the API server"
+  value       = "https://${var.api_server_host}:${var.api_server_port}"
 }
 
 output "client_certificate" {
