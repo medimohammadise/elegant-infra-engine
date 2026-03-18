@@ -6,4 +6,5 @@
 *.tfstate
 *.tfstate.*
 *.tfvars
-
+blitzinfra-config
+blitzinfra-kubeconfig
