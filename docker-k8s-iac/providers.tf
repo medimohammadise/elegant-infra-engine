@@ -10,6 +10,10 @@ terraform {
       source  = "tehcyx/kind"
       version = "~> 0.5.0"
     }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.0"
+    }
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = "~> 2.0"
@@ -37,17 +41,19 @@ provider "kind" {}
 
 # Kubernetes and Helm providers are configured dynamically from the kind cluster outputs!
 provider "kubernetes" {
-  host                   = module.kind-cluster.endpoint
-  client_certificate     = module.kind-cluster.client_certificate
-  client_key             = module.kind-cluster.client_key
-  cluster_ca_certificate = module.kind-cluster.cluster_ca_certificate
+  config_path              = module.kind-cluster.kubeconfig_path
+  config_context           = "kind-${module.kind-cluster.cluster_name}"
+  config_context_cluster   = "kind-${module.kind-cluster.cluster_name}"
+  config_context_auth_info = "kind-${module.kind-cluster.cluster_name}"
+  insecure                 = true
 }
 
 provider "helm" {
   kubernetes {
-    host                   = module.kind-cluster.endpoint
-    client_certificate     = module.kind-cluster.client_certificate
-    client_key             = module.kind-cluster.client_key
-    cluster_ca_certificate = module.kind-cluster.cluster_ca_certificate
+    config_path              = module.kind-cluster.kubeconfig_path
+    config_context           = "kind-${module.kind-cluster.cluster_name}"
+    config_context_cluster   = "kind-${module.kind-cluster.cluster_name}"
+    config_context_auth_info = "kind-${module.kind-cluster.cluster_name}"
+    insecure                 = true
   }
 }

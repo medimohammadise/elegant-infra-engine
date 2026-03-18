@@ -27,3 +27,14 @@ variable "worker_count" {
   description = "The number of worker nodes to provision"
   default     = 4
 }
+
+variable "kind_node_image" {
+  type        = string
+  description = "The kind node image to use when creating the cluster"
+}
+
+variable "recreate_revision" {
+  type        = string
+  description = "Change this token to force replacement of the kind cluster"
+  default     = ""
+}

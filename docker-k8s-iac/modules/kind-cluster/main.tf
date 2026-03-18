@@ -6,11 +6,20 @@ terraform {
       source  = "tehcyx/kind"
       version = "~> 0.5.0"
     }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.0"
+    }
   }
+}
+
+resource "terraform_data" "recreate" {
+  input = var.recreate_revision
 }
 
 resource "kind_cluster" "default" {
   name           = var.cluster_name
+  node_image     = var.kind_node_image
   wait_for_ready = true
 
   kind_config {
@@ -43,4 +52,17 @@ resource "kind_cluster" "default" {
       }
     }
   }
+
+  lifecycle {
+    replace_triggered_by = [terraform_data.recreate]
+  }
+}
+
+resource "local_sensitive_file" "kubeconfig" {
+  filename = "${path.root}/blitzinfra-kubeconfig"
+  content = replace(
+    kind_cluster.default.kubeconfig,
+    "https://0.0.0.0:${var.api_server_port}",
+    "https://${var.api_server_host}:${var.api_server_port}"
+  )
 }

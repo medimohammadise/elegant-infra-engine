@@ -5,3 +5,9 @@ variable "kube_namespace" {
   description = "The namespace to provision for the app"
   default     = "BlitzPay-DEV"
 }
+
+variable "recreate_revision" {
+  type        = string
+  description = "Change this token to force replacement of Kubernetes resources"
+  default     = ""
+}

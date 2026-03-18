@@ -1,6 +1,6 @@
 # BlitzInfra
 
-This repository contains the infrastructure configuration for provisioning a Docker registry, a UI, and a 5-node remote Kubernetes (`kind`) cluster over SSH, along with required namespaces and the Kubernetes Dashboard using Terraform.
+This repository contains the infrastructure configuration for provisioning a Docker registry, Postgres, a UI, and a 5-node remote Kubernetes (`kind`) cluster over SSH, along with a required namespace using Terraform.
 
 ## Prerequisites
 
@@ -31,10 +31,19 @@ api_server_host       = "myserver"
 registry_bind_address = "0.0.0.0"
 ui_bind_address       = "127.0.0.1"
 registry_title        = "Remote Docker Registry"
+postgres_bind_address = "0.0.0.0"
+postgres_port         = 5432
+postgres_db_name      = "blitzinfra"
+postgres_user         = "blitzinfra"
+postgres_password     = "change-me"
 cluster_name          = "blitzinfra"
 worker_count          = 4
+kind_node_image       = "kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e"
 kube_namespace        = "blitzpay-dev"
+recreate_revision     = ""
 ```
+
+Set `postgres_password` to a real secret before you apply.
 
 ## Provisioning
 
@@ -47,35 +56,32 @@ terraform init
 Review the execution plan:
 
 ```bash
-DOCKER_HOST=ssh://myserver terraform plan
+mkdir -p /tmp/docker-empty-config
+printf '{}' > /tmp/docker-empty-config/config.json
+DOCKER_CONFIG=/tmp/docker-empty-config DOCKER_HOST=ssh://myserver terraform plan
 ```
 
 Apply the changes to provision the infrastructure:
 
 ```bash
-DOCKER_HOST=ssh://myserver terraform apply
+DOCKER_CONFIG=/tmp/docker-empty-config DOCKER_HOST=ssh://myserver terraform apply
 ```
 
-> **Note**: The `DOCKER_HOST` environment variable is required so that the `kind` CLI plugin inside the provider can communicate with the remote Docker daemon natively to build the cluster.
+> **Note**: `DOCKER_HOST` is required so that the `kind` CLI plugin inside the provider can communicate with the remote Docker daemon natively. `DOCKER_CONFIG=/tmp/docker-empty-config` forces the local Docker CLI to use a clean config, which avoids local credential-helper issues such as missing `docker-credential-desktop`.
+
+## Force Recreate
+
+If you need Terraform to tear down and recreate all managed infrastructure resources, change `recreate_revision` to a new value in `terraform.tfvars` and apply again:
+
+```hcl
+recreate_revision = "rebuild-2026-03-17-1"
+```
+
+Terraform will treat that token change as a one-time full replacement trigger for the Docker resources, the kind cluster, and the Kubernetes resources. Leave the value unchanged during normal applies.
 
 ## What it Does
 
 When you apply the Terraform configuration, it systematically modules through:
-1. `pre-k8s`: Creates the Docker Registry and Registry UI natively with Docker containers on the remote host.
+1. `pre-k8s`: Creates PostgreSQL, the Docker Registry, and the Registry UI natively with Docker containers on the remote host.
 2. `kind-cluster`: Provisions a 5-node `kind` cluster on the remote host and fetches the kubeconfig.
-3. `k8s-resources`: Uses the cluster output to set up the `blitzpay-dev` namespace and deploys the `kubernetes-dashboard` via Helm.
-
-## Access Kubernetes Dashboard
-
-The dashboard is installed via Helm automatically. Start a local proxy:
-
-```bash
-kubectl port-forward svc/kubernetes-dashboard -n kubernetes-dashboard 8443:443
-```
-
-Then open `https://localhost:8443` and create a login token with:
-
-```bash
-kubectl -n kubernetes-dashboard create token admin-user
-```
-
+3. `k8s-resources`: Uses the cluster output to set up the `blitzpay-dev` namespace.
