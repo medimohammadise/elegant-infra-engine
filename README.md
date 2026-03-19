@@ -2,6 +2,13 @@
 
 This repository contains the infrastructure configuration for provisioning a Docker registry, Postgres, a UI, and a 5-node remote Kubernetes (`kind`) cluster over SSH, along with a required namespace using Terraform.
 
+
+## GitHub Release Notes Automation
+
+This repository includes a caller workflow at `.github/workflows/release-notes-on-main-merge.yml` that invokes the reusable Release Notes workflow from `medimohammadise/elegant-ci-cd-pipeline` on branch `001-release-notes-workflow`.
+
+When a pull request is merged into `main`, this workflow forwards the merge commit range (`base_sha` and `head_sha`) to that reusable workflow.
+
 ## Prerequisites
 
 - SSH access to the remote host (e.g. `myserver`) where Docker is running.
