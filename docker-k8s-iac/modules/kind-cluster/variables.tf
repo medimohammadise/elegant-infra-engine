@@ -38,3 +38,21 @@ variable "recreate_revision" {
   description = "Change this token to force replacement of the kind cluster"
   default     = ""
 }
+
+variable "expose_dashboard_public" {
+  type        = bool
+  description = "Expose the Kubernetes Dashboard through the kind control-plane host port"
+  default     = false
+}
+
+variable "dashboard_node_port" {
+  type        = number
+  description = "The Kubernetes NodePort used for the Dashboard HTTPS service"
+  default     = 32443
+}
+
+variable "dashboard_host_port" {
+  type        = number
+  description = "The remote host port mapped to the Dashboard NodePort"
+  default     = 8443
+}
