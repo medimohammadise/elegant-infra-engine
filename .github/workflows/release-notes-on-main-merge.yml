@@ -1,0 +1,17 @@
+name: Release Notes on Main Merge
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  release-notes:
+    if: ${{ github.event.pull_request.merged == true }}
+    uses: medimohammadise/elegant-ci-cd-pipeline/.github/workflows/reusable-release-notes.yml@001-release-notes-workflow
+    with:
+      base_sha: ${{ github.event.pull_request.base.sha }}
+      head_sha: ${{ github.event.pull_request.merge_commit_sha || github.event.pull_request.head.sha }}
+      target_branch: ${{ github.event.pull_request.base.ref }}
