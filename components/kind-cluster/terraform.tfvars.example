@@ -1,0 +1,21 @@
+ssh_context_host = "myserver"
+api_server_host  = "myserver"
+
+kubernetes = {
+  cluster_name    = "blitzinfra"
+  api_server_port = 6443
+  worker_count    = 4
+  kind_node_image = "kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e"
+}
+
+backstage_port_mapping = {
+  node_port = 32007
+  host_port = 7007
+}
+
+dashboard_port_mapping = {
+  node_port = 32443
+  host_port = 8443
+}
+
+recreate_revision = ""
