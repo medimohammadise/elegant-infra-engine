@@ -118,14 +118,14 @@ variable "observability" {
     kibana = optional(object({
       enabled       = optional(bool, true)
       chart_version = optional(string, "8.5.1")
-      expose_public = optional(bool, false)
+      expose_public = optional(bool, true)
       node_port     = optional(number, 32081)
       host_port     = optional(number, 7081)
     }), {})
     jaeger = optional(object({
       enabled          = optional(bool, true)
       chart_version    = optional(string, "3.4.1")
-      expose_public    = optional(bool, false)
+      expose_public    = optional(bool, true)
       query_node_port  = optional(number, 31686)
       query_host_port  = optional(number, 7068)
       collector_memory = optional(string, "256Mi")

@@ -304,10 +304,10 @@ This root installs:
 
 ### Public access options
 
-For development, the default is in-cluster services (`ClusterIP`). You can either:
+For this repository's remote-kind setup, **default examples use public exposure** so Kibana and Jaeger are reachable from other machines (not only the install host). You can still choose either:
 
-1. Use `kubectl port-forward`, or
-2. Enable NodePort exposure and reserve host-port mappings through `components/kind-cluster` or `components/all`.
+1. Use `kubectl port-forward` for local-only access, or
+2. Keep NodePort + host-port exposure enabled through `components/kind-cluster` or `components/all` for remote access.
 
 Example port-forward commands:
 
@@ -332,6 +332,12 @@ When exposed publicly from `components/all`, the outputs include:
 
 - `kibana_url`
 - `jaeger_query_url`
+
+Remote access from other machines:
+
+- Use `http://<api_server_host>:<kibana_host_port>` for Kibana.
+- Use `http://<api_server_host>:<jaeger_query_host_port>` for Jaeger.
+- Keep `kind` host-port mappings and firewall/security-group rules open for those ports.
 
 ## Using Kibana for Log Analysis
 

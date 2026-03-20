@@ -73,7 +73,7 @@ observability = {
   kibana = {
     enabled       = true
     chart_version = "8.5.1"
-    expose_public = false
+    expose_public = true
     node_port     = 32081
     host_port     = 7081
   }
@@ -81,7 +81,7 @@ observability = {
   jaeger = {
     enabled          = true
     chart_version    = "3.4.1"
-    expose_public    = false
+    expose_public    = true
     query_node_port  = 31686
     query_host_port  = 7068
     collector_memory = "256Mi"
