@@ -1,6 +1,6 @@
 variable "kubeconfig_path" {
   type        = string
-  description = "Optional explicit kubeconfig path. If null, defaults to ../kind-cluster/<cluster_name>-kubeconfig."
+  description = "Optional explicit kubeconfig path. If unset or missing, provider falls back to default kubeconfig loading."
   default     = null
 }
 

@@ -25,5 +25,6 @@ provider "helm" {
 
 
 locals {
-  resolved_kubeconfig_path = var.kubeconfig_path != null ? pathexpand(var.kubeconfig_path) : "${path.root}/../kind-cluster/${var.cluster_name}-kubeconfig"
+  requested_kubeconfig_path = var.kubeconfig_path != null ? pathexpand(var.kubeconfig_path) : "${path.root}/../kind-cluster/${var.cluster_name}-kubeconfig"
+  resolved_kubeconfig_path  = fileexists(local.requested_kubeconfig_path) ? local.requested_kubeconfig_path : null
 }
