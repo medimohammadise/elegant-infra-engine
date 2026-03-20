@@ -3,7 +3,74 @@
 variable "kube_namespace" {
   type        = string
   description = "The namespace to provision for the app"
-  default     = "BlitzPay-DEV"
+  default     = "blitzpay-dev"
+}
+
+variable "enable_backstage" {
+  type        = bool
+  description = "Install Backstage through the official Helm chart when true"
+  default     = true
+}
+
+variable "backstage_namespace" {
+  type        = string
+  description = "Namespace where Backstage will be installed"
+  default     = "backstage"
+}
+
+variable "backstage_chart_version" {
+  type        = string
+  description = "Version of the official Backstage Helm chart to install"
+  default     = "2.6.3"
+}
+
+variable "backstage_image_tag" {
+  type        = string
+  description = "Pinned Backstage application image tag used by the Helm chart"
+}
+
+variable "backstage_base_url" {
+  type        = string
+  description = "Base URL used by the Backstage app and backend"
+  default     = ""
+}
+
+variable "expose_backstage_public" {
+  type        = bool
+  description = "Expose Backstage through a NodePort service"
+  default     = true
+}
+
+variable "backstage_node_port" {
+  type        = number
+  description = "The Kubernetes NodePort used for the Backstage HTTP service"
+  default     = 32007
+}
+
+variable "postgres_host" {
+  type        = string
+  description = "Hostname or IP address for the existing PostgreSQL instance used by Backstage"
+}
+
+variable "postgres_port" {
+  type        = number
+  description = "Port for the existing PostgreSQL instance used by Backstage"
+}
+
+variable "postgres_db_name" {
+  type        = string
+  description = "Database name for the existing PostgreSQL instance used by Backstage"
+}
+
+variable "postgres_user" {
+  type        = string
+  description = "Database user for the existing PostgreSQL instance used by Backstage"
+}
+
+variable "postgres_password" {
+  type        = string
+  description = "Database password for the existing PostgreSQL instance used by Backstage"
+  sensitive   = true
 }
 
 variable "enable_k8s_dashboard" {

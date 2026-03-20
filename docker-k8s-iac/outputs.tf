@@ -19,3 +19,8 @@ output "kubernetes_api_endpoint" {
   description = "The endpoint of the Kubernetes API Server"
   value       = module.kind-cluster.endpoint
 }
+
+output "backstage_url" {
+  description = "The configured Backstage base URL"
+  value       = var.enable_backstage ? local.backstage_base_url : null
+}
