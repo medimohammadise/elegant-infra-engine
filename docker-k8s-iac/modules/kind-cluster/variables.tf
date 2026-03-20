@@ -39,6 +39,24 @@ variable "recreate_revision" {
   default     = ""
 }
 
+variable "expose_backstage_public" {
+  type        = bool
+  description = "Expose Backstage through the kind control-plane host port"
+  default     = false
+}
+
+variable "backstage_node_port" {
+  type        = number
+  description = "The Kubernetes NodePort used for the Backstage HTTP service"
+  default     = 32007
+}
+
+variable "backstage_host_port" {
+  type        = number
+  description = "The remote host port mapped to the Backstage NodePort"
+  default     = 7007
+}
+
 variable "expose_dashboard_public" {
   type        = bool
   description = "Expose the Kubernetes Dashboard through the kind control-plane host port"

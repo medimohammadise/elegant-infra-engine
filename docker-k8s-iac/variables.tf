@@ -94,6 +94,54 @@ variable "enable_k8s_dashboard" {
   default     = false
 }
 
+variable "enable_backstage" {
+  type        = bool
+  description = "Install Backstage through the official Helm chart when true"
+  default     = true
+}
+
+variable "backstage_namespace" {
+  type        = string
+  description = "Namespace where Backstage will be installed"
+  default     = "backstage"
+}
+
+variable "backstage_chart_version" {
+  type        = string
+  description = "Version of the official Backstage Helm chart to install"
+  default     = "2.6.3"
+}
+
+variable "backstage_image_tag" {
+  type        = string
+  description = "Pinned Backstage application image tag used by the Helm chart. Do not leave this floating on latest."
+  default     = "1.30.2"
+}
+
+variable "backstage_base_url" {
+  type        = string
+  description = "Base URL used by the Backstage app and backend. Leave empty to derive http://<api_server_host>:<backstage_host_port>."
+  default     = ""
+}
+
+variable "expose_backstage_public" {
+  type        = bool
+  description = "Expose Backstage on the remote host through the kind control-plane host port"
+  default     = true
+}
+
+variable "backstage_node_port" {
+  type        = number
+  description = "The Kubernetes NodePort used for the Backstage HTTP service"
+  default     = 32007
+}
+
+variable "backstage_host_port" {
+  type        = number
+  description = "The remote host port mapped to the Backstage NodePort"
+  default     = 7007
+}
+
 variable "dashboard_namespace" {
   type        = string
   description = "Namespace where Kubernetes Dashboard will be installed"
