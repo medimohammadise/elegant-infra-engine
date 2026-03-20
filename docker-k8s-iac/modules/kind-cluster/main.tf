@@ -45,6 +45,16 @@ resource "kind_cluster" "default" {
       ]
 
       dynamic "extra_port_mappings" {
+        for_each = var.expose_backstage_public ? [1] : []
+        content {
+          container_port = var.backstage_node_port
+          host_port      = var.backstage_host_port
+          listen_address = "0.0.0.0"
+          protocol       = "TCP"
+        }
+      }
+
+      dynamic "extra_port_mappings" {
         for_each = var.expose_dashboard_public ? [1] : []
         content {
           container_port = var.dashboard_node_port
