@@ -1,0 +1,15 @@
+ssh_context_host     = "myserver"
+ssh_private_key_path = "~/.ssh/id_rsa"
+
+postgres = {
+  network_name   = "registry_net"
+  create_network = true
+  bind_address   = "0.0.0.0"
+  port           = 5432
+  db_name        = "blitzinfra"
+  user           = "blitzinfra"
+  password       = "change-me"
+  volume_name    = "postgres_data"
+}
+
+recreate_revision = ""
