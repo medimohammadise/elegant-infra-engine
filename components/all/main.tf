@@ -3,6 +3,8 @@ locals {
   backstage_base_url    = try(trimspace(var.backstage.base_url), "") != "" ? var.backstage.base_url : "https://${var.api_server_host}:${var.backstage.host_port}"
   kind_cluster_name     = try(var.kubernetes.cluster_name, "blitzinfra")
   kind_cluster_endpoint = "https://${var.api_server_host}:${var.kubernetes.api_server_port}"
+  kibana_base_url       = "http://${var.api_server_host}:${var.observability.kibana.host_port}"
+  jaeger_base_url       = "http://${var.api_server_host}:${var.observability.jaeger.query_host_port}"
 }
 
 module "docker_network" {
@@ -68,6 +70,14 @@ module "kind_cluster" {
   dashboard_port_mapping = var.dashboard.enabled && var.dashboard.expose_public ? {
     node_port = var.dashboard.node_port
     host_port = var.dashboard.host_port
+  } : null
+  observability_kibana_port_mapping = var.observability.enabled && var.observability.kibana.enabled && var.observability.kibana.expose_public ? {
+    node_port = var.observability.kibana.node_port
+    host_port = var.observability.kibana.host_port
+  } : null
+  observability_jaeger_port_mapping = var.observability.enabled && var.observability.jaeger.enabled && var.observability.jaeger.expose_public ? {
+    node_port = var.observability.jaeger.query_node_port
+    host_port = var.observability.jaeger.query_host_port
   } : null
   recreate_revision = trimspace(try(var.kubernetes.recreate_revision, "")) != "" ? var.kubernetes.recreate_revision : var.recreate_revision
 
@@ -140,4 +150,28 @@ module "kubernetes_dashboard" {
   recreate_revision = trimspace(try(var.dashboard.recreate_revision, "")) != "" ? var.dashboard.recreate_revision : var.recreate_revision
 
   depends_on = [module.dashboard_namespace]
+}
+
+
+module "observability_namespace" {
+  count  = var.observability.enabled ? 1 : 0
+  source = "../../modules/k8s-namespace"
+
+  name = var.observability.namespace
+
+  depends_on = [terraform_data.kind_cluster_ready]
+}
+
+module "observability" {
+  count  = var.observability.enabled ? 1 : 0
+  source = "../../modules/observability"
+
+  namespace         = module.observability_namespace[0].name
+  elasticsearch     = var.observability.elasticsearch
+  fluentd           = var.observability.fluentd
+  kibana            = var.observability.kibana
+  jaeger            = var.observability.jaeger
+  recreate_revision = trimspace(try(var.observability.recreate_revision, "")) != "" ? var.observability.recreate_revision : var.recreate_revision
+
+  depends_on = [module.observability_namespace]
 }

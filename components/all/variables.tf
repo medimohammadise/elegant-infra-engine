@@ -98,3 +98,40 @@ variable "recreate_revision" {
   description = "Global replacement token passed to modules that support one-shot recreation."
   default     = ""
 }
+
+
+variable "observability" {
+  type = object({
+    enabled           = optional(bool, true)
+    namespace         = optional(string, "observability")
+    recreate_revision = optional(string, "")
+    elasticsearch = optional(object({
+      enabled        = optional(bool, true)
+      chart_version  = optional(string, "8.5.1")
+      replicas       = optional(number, 1)
+      minimum_master = optional(number, 1)
+    }), {})
+    fluentd = optional(object({
+      enabled       = optional(bool, true)
+      chart_version = optional(string, "0.5.2")
+    }), {})
+    kibana = optional(object({
+      enabled       = optional(bool, true)
+      chart_version = optional(string, "8.5.1")
+      expose_public = optional(bool, false)
+      node_port     = optional(number, 32081)
+      host_port     = optional(number, 7081)
+    }), {})
+    jaeger = optional(object({
+      enabled          = optional(bool, true)
+      chart_version    = optional(string, "3.4.1")
+      expose_public    = optional(bool, false)
+      query_node_port  = optional(number, 31686)
+      query_host_port  = optional(number, 7068)
+      collector_memory = optional(string, "256Mi")
+      query_memory     = optional(string, "256Mi")
+    }), {})
+  })
+  description = "Observability settings for EFK and Jaeger."
+  default     = {}
+}

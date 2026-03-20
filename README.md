@@ -12,6 +12,7 @@ components/
   kind-cluster/         Deploy the remote kind cluster
   backstage/            Deploy Backstage into an existing cluster
   kubernetes-dashboard/ Deploy Kubernetes Dashboard into an existing cluster
+  observability/       Deploy EFK + Jaeger into an existing cluster
 modules/
   Reusable Terraform modules shared by the component roots
 scripts/
@@ -32,6 +33,7 @@ flowchart TD
   Components --> KindComponent["kind-cluster/"]
   Components --> BackstageComponent["backstage/"]
   Components --> DashboardComponent["kubernetes-dashboard/"]
+  Components --> ObservabilityComponent["observability/"]
 
   Modules --> DockerNetwork["docker-network/"]
   Modules --> RegistryModule["docker-registry/"]
@@ -41,6 +43,7 @@ flowchart TD
   Modules --> NamespaceModule["k8s-namespace/"]
   Modules --> BackstageModule["backstage/"]
   Modules --> DashboardModule["kubernetes-dashboard/"]
+  Modules --> ObservabilityModule["observability/"]
 
   Scripts --> BackstageScript["backstage-postrender.sh"]
 ```
@@ -57,6 +60,7 @@ flowchart TD
   All --> Namespace["modules/k8s-namespace"]
   All --> Backstage["modules/backstage"]
   All --> Dashboard["modules/kubernetes-dashboard"]
+  All --> Observability["modules/observability"]
 
   RegistryComponent["components/docker-registry"] --> DockerNetwork
   RegistryComponent --> Registry
@@ -70,6 +74,8 @@ flowchart TD
   BackstageComponent --> Backstage
   DashboardComponent["components/kubernetes-dashboard"] --> Namespace
   DashboardComponent --> Dashboard
+  ObservabilityComponent["components/observability"] --> Namespace
+  ObservabilityComponent --> Observability
 ```
 
 ```mermaid
@@ -140,6 +146,7 @@ Use the component roots when you want independent deployment lifecycles:
 - `components/kind-cluster` for the remote `kind` cluster and kubeconfig
 - `components/backstage` for Backstage on an existing cluster
 - `components/kubernetes-dashboard` for Dashboard on an existing cluster
+- `components/observability` for EFK + Jaeger on an existing cluster
 
 Each component root has its own `terraform.tfvars.example`.
 
@@ -274,3 +281,105 @@ Leave it unchanged during normal applies.
 - Backstage still uses the upstream demo image and generated self-signed TLS, which is suitable for bootstrap and evaluation rather than production.
 - The Backstage Helm release is post-rendered to force the Deployment strategy to `Recreate`, which avoids migration lock contention against the shared PostgreSQL database.
 - Kubernetes Dashboard admin user creation is convenient for dev environments but grants cluster-admin access.
+
+
+### Observability (EFK + Jaeger)
+
+```bash
+cd components/observability
+cp terraform.tfvars.example terraform.tfvars
+terraform init
+terraform plan
+terraform apply
+```
+
+This root installs:
+
+- **Elasticsearch** for centralized log storage.
+- **Fluentd** as a DaemonSet collecting pod/node logs and forwarding them to Elasticsearch.
+- **Kibana** for dashboard-based search and visualization.
+- **Jaeger** (all-in-one mode) for distributed tracing and APM-like service latency visibility.
+
+## Observability Configuration and Access
+
+### Public access options
+
+For development, the default is in-cluster services (`ClusterIP`). You can either:
+
+1. Use `kubectl port-forward`, or
+2. Enable NodePort exposure and reserve host-port mappings through `components/kind-cluster` or `components/all`.
+
+Example port-forward commands:
+
+```bash
+kubectl --kubeconfig <path-to-kubeconfig> -n observability port-forward svc/kibana-kibana 5601:5601
+kubectl --kubeconfig <path-to-kubeconfig> -n observability port-forward svc/jaeger-query 16686:16686
+```
+
+Then open:
+
+- Kibana: `http://localhost:5601`
+- Jaeger UI: `http://localhost:16686`
+
+### NodePort-based access
+
+If you set `observability.kibana.expose_public = true` and/or `observability.jaeger.expose_public = true`, configure matching kind host-port mappings:
+
+- Kibana: `observability.kibana.node_port` mapped to `observability.kibana.host_port`
+- Jaeger query: `observability.jaeger.query_node_port` mapped to `observability.jaeger.query_host_port`
+
+When exposed publicly from `components/all`, the outputs include:
+
+- `kibana_url`
+- `jaeger_query_url`
+
+## Using Kibana for Log Analysis
+
+1. Open Kibana and create a data view for `logstash-*`.
+2. Use Discover to filter by namespace, pod name, or container name.
+3. Save useful searches (for example, error-level events from Backstage).
+4. Build dashboards with:
+   - error count over time,
+   - top noisy pods,
+   - per-namespace log volume,
+   - deployment-event correlation with spikes.
+5. Use KQL examples:
+   - `kubernetes.namespace_name : "backstage"`
+   - `log : "ERROR"`
+   - `kubernetes.container_name : "backstage" and log : "timeout"`
+
+## Using Jaeger for Tracing and APM-like Visibility
+
+1. Instrument services with OpenTelemetry/Jaeger SDKs.
+2. Configure your apps to send spans to the in-cluster Jaeger collector.
+3. Open Jaeger UI and select the service.
+4. Analyze:
+   - end-to-end request latency,
+   - critical path and slow spans,
+   - error tags/exceptions,
+   - operation-level latency percentiles.
+5. For development, all-in-one Jaeger keeps setup simple and low-overhead.
+
+## How EFK and Jaeger Work Together
+
+- **EFK** answers: *what happened* (logs, errors, context).
+- **Jaeger** answers: *where time was spent* (spans, dependencies, bottlenecks).
+- Together they provide practical day-1 observability for development while keeping a clean path to future upgrades (for example persistent Elasticsearch storage and production-grade Jaeger storage backends).
+
+## Troubleshooting
+
+- **No logs in Kibana**
+  - Check Fluentd pods: `kubectl -n observability get pods -l app.kubernetes.io/name=fluentd`
+  - Check Fluentd logs for Elasticsearch connection errors.
+  - Verify Elasticsearch health: `kubectl -n observability get pods -l app=elasticsearch-master`
+- **Kibana unavailable**
+  - Confirm Kibana pod is Ready.
+  - Verify service type/NodePort values and kind host-port mappings.
+  - If using port-forward, keep the terminal session running.
+- **No traces in Jaeger**
+  - Confirm app instrumentation and exporter endpoint settings.
+  - Check Jaeger collector/query pod logs.
+  - Verify clock/time sync issues are not skewing traces.
+- **NodePort reachable in cluster but not from remote host**
+  - Ensure `components/kind-cluster` or `components/all` includes matching host-port mapping.
+  - Confirm firewall/security-group rules allow inbound traffic to chosen host ports.

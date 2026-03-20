@@ -1,0 +1,37 @@
+kubeconfig_path = "./blitzinfra-kubeconfig"
+
+observability = {
+  namespace = "observability"
+
+  elasticsearch = {
+    enabled        = true
+    chart_version  = "8.5.1"
+    replicas       = 1
+    minimum_master = 1
+  }
+
+  fluentd = {
+    enabled       = true
+    chart_version = "0.5.2"
+  }
+
+  kibana = {
+    enabled       = true
+    chart_version = "8.5.1"
+    expose_public = false
+    node_port     = 32081
+    host_port     = 7081
+  }
+
+  jaeger = {
+    enabled          = true
+    chart_version    = "3.4.1"
+    expose_public    = false
+    query_node_port  = 31686
+    query_host_port  = 7068
+    collector_memory = "256Mi"
+    query_memory     = "256Mi"
+  }
+}
+
+recreate_revision = ""
