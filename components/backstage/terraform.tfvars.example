@@ -1,0 +1,21 @@
+kubeconfig_path = "./blitzinfra-kubeconfig"
+cluster_name    = "blitzinfra"
+
+backstage = {
+  namespace     = "backstage"
+  chart_version = "2.6.3"
+  image_tag     = "1.30.2"
+  base_url      = "https://myserver:7007"
+  expose_public = true
+  node_port     = 32007
+}
+
+postgres = {
+  host     = "host.docker.internal"
+  port     = 5432
+  db_name  = "blitzinfra"
+  user     = "blitzinfra"
+  password = "change-me"
+}
+
+recreate_revision = ""
