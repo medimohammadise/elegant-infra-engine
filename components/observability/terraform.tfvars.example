@@ -1,5 +1,6 @@
-kubeconfig_path = "./blitzinfra-kubeconfig"
+kubeconfig_path = "../kind-cluster/blitzinfra-kubeconfig"
 api_server_host = "myserver"
+cluster_name    = "blitzinfra"
 
 observability = {
   namespace = "observability"

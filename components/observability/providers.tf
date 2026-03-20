@@ -12,13 +12,18 @@ terraform {
 }
 
 provider "kubernetes" {
-  config_path = var.kubeconfig_path
+  config_path = local.resolved_kubeconfig_path
   insecure    = true
 }
 
 provider "helm" {
   kubernetes {
-    config_path = var.kubeconfig_path
+    config_path = local.resolved_kubeconfig_path
     insecure    = true
   }
+}
+
+
+locals {
+  resolved_kubeconfig_path = var.kubeconfig_path != null ? pathexpand(var.kubeconfig_path) : "${path.root}/../kind-cluster/${var.cluster_name}-kubeconfig"
 }
