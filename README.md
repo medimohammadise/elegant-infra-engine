@@ -293,7 +293,7 @@ terraform plan
 terraform apply
 ```
 
-Before applying, either set `kubeconfig_path` to a real kubeconfig file, or leave it unset so Terraform uses your default kubeconfig loading (`KUBECONFIG` / `~/.kube/config`). In this repo, a common explicit path is `../kind-cluster/blitzinfra-kubeconfig` from inside `components/observability`.
+Before applying, set `kubeconfig_path` to the kubeconfig produced by `components/kind-cluster` (usually `../kind-cluster/blitzinfra-kubeconfig` from inside `components/observability`). If you skip this, Terraform may fail to load cluster server details during provider initialization.
 
 This root installs:
 
@@ -380,10 +380,10 @@ Remote access from other machines:
   - Check Fluentd pods: `kubectl -n observability get pods -l app.kubernetes.io/name=fluentd`
   - Check Fluentd logs for Elasticsearch connection errors.
   - Verify Elasticsearch health: `kubectl -n observability get pods -l app=elasticsearch-master`
-- **kubeconfig path issues**
-  - If you set `kubeconfig_path`, ensure it is valid from inside `components/observability`.
-  - Alternatively remove `kubeconfig_path` from tfvars and rely on `KUBECONFIG` or `~/.kube/config`.
-  - For this repo, `../kind-cluster/blitzinfra-kubeconfig` is a common explicit path after running `components/kind-cluster`.
+- **Provider cannot load Kubernetes client config / default cluster has no server defined**
+  - Set `kubeconfig_path` explicitly in `components/observability/terraform.tfvars` to `../kind-cluster/blitzinfra-kubeconfig` (or your actual kubeconfig path).
+  - Run `components/kind-cluster` first so that kubeconfig exists.
+  - Confirm the selected kubeconfig context contains a cluster `server` endpoint.
 - **Kibana unavailable**
   - Confirm Kibana pod is Ready.
   - Verify service type/NodePort values and kind host-port mappings.

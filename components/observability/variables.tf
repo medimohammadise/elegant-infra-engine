@@ -1,7 +1,14 @@
 variable "kubeconfig_path" {
   type        = string
-  description = "Path to the kubeconfig file of the target cluster."
+  description = "Optional explicit kubeconfig path. If null, defaults to ../kind-cluster/<cluster_name>-kubeconfig."
   default     = null
+}
+
+
+variable "cluster_name" {
+  type        = string
+  description = "Cluster name used to derive the default kubeconfig path when kubeconfig_path is not set."
+  default     = "blitzinfra"
 }
 
 variable "api_server_host" {
