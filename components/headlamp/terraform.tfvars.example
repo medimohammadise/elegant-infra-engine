@@ -1,0 +1,17 @@
+kubeconfig_path = "./blitzinfra-kubeconfig"
+cluster_name    = "blitzinfra"
+
+headlamp = {
+  namespace                   = "headlamp"
+  chart_repository            = null
+  chart_name                  = "../../vendor/headlamp-chart"
+  chart_version               = "0.40.1"
+  expose_public               = false
+  node_port                   = 32443
+  create_service_account      = true
+  service_account_name        = "headlamp"
+  create_cluster_role_binding = true
+  cluster_role_name           = "cluster-admin"
+}
+
+recreate_revision = ""

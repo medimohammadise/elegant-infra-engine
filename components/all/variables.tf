@@ -77,19 +77,23 @@ variable "backstage" {
   default     = {}
 }
 
-variable "dashboard" {
+variable "headlamp" {
   type = object({
-    enabled           = optional(bool, false)
-    namespace         = optional(string, "kubernetes-dashboard")
-    chart_url         = optional(string, "https://github.com/kubernetes-retired/dashboard/releases/download/kubernetes-dashboard-7.14.0/kubernetes-dashboard-7.14.0.tgz")
-    expose_public     = optional(bool, false)
-    node_port         = optional(number, 32443)
-    host_port         = optional(number, 8443)
-    create_admin_user = optional(bool, true)
-    admin_user_name   = optional(string, "admin-user")
-    recreate_revision = optional(string, "")
+    enabled                     = optional(bool, false)
+    namespace                   = optional(string, "headlamp")
+    chart_repository            = optional(string)
+    chart_name                  = optional(string, "../../vendor/headlamp-chart")
+    chart_version               = optional(string, "0.40.1")
+    expose_public               = optional(bool, false)
+    node_port                   = optional(number, 32443)
+    host_port                   = optional(number, 8443)
+    create_service_account      = optional(bool, true)
+    service_account_name        = optional(string, "headlamp")
+    create_cluster_role_binding = optional(bool, true)
+    cluster_role_name           = optional(string, "cluster-admin")
+    recreate_revision           = optional(string, "")
   })
-  description = "Kubernetes Dashboard deployment settings."
+  description = "Headlamp deployment settings."
   default     = {}
 }
 

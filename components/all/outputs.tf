@@ -37,7 +37,7 @@ output "backstage_url" {
   value       = var.backstage.enabled ? local.backstage_base_url : null
 }
 
-output "dashboard_url" {
-  description = "Configured Kubernetes Dashboard URL when publicly exposed."
-  value       = var.dashboard.enabled && var.dashboard.expose_public ? "https://${var.api_server_host}:${var.dashboard.host_port}" : null
+output "headlamp_url" {
+  description = "Configured Headlamp URL when publicly exposed."
+  value       = var.headlamp.enabled && var.headlamp.expose_public ? "http://${var.api_server_host}:${var.headlamp.host_port}" : null
 }

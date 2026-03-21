@@ -9,6 +9,6 @@ module "kind_cluster" {
   kind_node_image        = var.kubernetes.kind_node_image
   kubeconfig_path        = try(var.kubernetes.kubeconfig_path, null)
   backstage_port_mapping = var.backstage_port_mapping
-  dashboard_port_mapping = var.dashboard_port_mapping
+  headlamp_port_mapping  = var.headlamp_port_mapping
   recreate_revision      = var.recreate_revision
 }
