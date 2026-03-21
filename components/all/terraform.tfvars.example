@@ -2,6 +2,12 @@ ssh_context_host     = "myserver"
 ssh_private_key_path = "~/.ssh/id_rsa"
 api_server_host      = "myserver"
 bootstrap_namespace  = "blitzpay-dev"
+keycloak_url         = "https://sso.example.com"
+
+keycloak_port_mapping = {
+  node_port = 32080
+  host_port = 8080
+}
 
 registry = {
   network_name   = "registry_net"

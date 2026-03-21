@@ -97,6 +97,22 @@ variable "headlamp" {
   default     = {}
 }
 
+variable "keycloak_port_mapping" {
+  type = object({
+    node_port = number
+    host_port = number
+  })
+  description = "Optional NodePort to host-port mapping reserved for Keycloak."
+  default     = null
+}
+
+variable "keycloak_url" {
+  type        = string
+  description = "Optional externally managed Keycloak base URL to surface with the platform endpoints."
+  default     = null
+  nullable    = true
+}
+
 variable "recreate_revision" {
   type        = string
   description = "Global replacement token passed to modules that support one-shot recreation."

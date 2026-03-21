@@ -1,0 +1,26 @@
+kubeconfig_path = "./blitzinfra-kubeconfig"
+cluster_name    = "blitzinfra"
+api_server_host = "myserver"
+
+keycloak = {
+  name             = "keycloak"
+  namespace        = "keycloak"
+  image_repository = "quay.io/keycloak/keycloak"
+  image_tag        = "26.5.6"
+  replicas         = 1
+  expose_public    = true
+  node_port        = 32080
+  host_port        = 8080
+  admin_username   = "admin"
+  admin_password   = "change-me"
+}
+
+postgres = {
+  host     = "host.docker.internal"
+  port     = 5432
+  db_name  = "keycloak"
+  user     = "keycloak"
+  password = "change-me"
+}
+
+recreate_revision = ""
