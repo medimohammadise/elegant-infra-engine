@@ -8,7 +8,7 @@ These instructions apply to the entire repository unless a deeper `AGENTS.md` ov
 - Deployable Terraform roots live under `components/`.
 - Reusable Terraform modules live under `modules/`.
 - Shared helper scripts live under `scripts/`.
-- Current component roots include `all`, `docker-registry`, `postgres`, `kind-cluster`, `backstage`, and `kubernetes-dashboard`.
+- Current component roots include `all`, `docker-registry`, `postgres`, `kind-cluster`, `backstage`, and `headlamp`.
 
 ## Working Agreement
 - Keep changes focused on Terraform-based infrastructure automation, bootstrap flow, helper scripts, and related documentation.
