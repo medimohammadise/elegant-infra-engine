@@ -3,6 +3,16 @@ locals {
   backstage_base_url    = try(trimspace(var.backstage.base_url), "") != "" ? var.backstage.base_url : "https://${var.api_server_host}:${var.backstage.host_port}"
   kind_cluster_name     = try(var.kubernetes.cluster_name, "blitzinfra")
   kind_cluster_endpoint = "https://${var.api_server_host}:${var.kubernetes.api_server_port}"
+  kibana_base_url = (
+    try(var.observability.kibana.ingress.enabled, false)
+    ? "http://${var.observability.kibana.ingress.host}"
+    : "http://${var.api_server_host}:${var.observability.kibana.host_port}"
+  )
+  jaeger_base_url = (
+    try(var.observability.jaeger.ingress.enabled, false)
+    ? "http://${var.observability.jaeger.ingress.host}"
+    : "http://${var.api_server_host}:${var.observability.jaeger.query_host_port}"
+  )
 }
 
 module "docker_network" {
@@ -69,6 +79,22 @@ module "kind_cluster" {
     node_port = var.dashboard.node_port
     host_port = var.dashboard.host_port
   } : null
+  observability_kibana_port_mapping = var.observability.enabled && var.observability.kibana.enabled && var.observability.kibana.expose_public ? {
+    node_port = var.observability.kibana.node_port
+    host_port = var.observability.kibana.host_port
+  } : null
+  observability_jaeger_port_mapping = var.observability.enabled && var.observability.jaeger.enabled && var.observability.jaeger.expose_public ? {
+    node_port = var.observability.jaeger.query_node_port
+    host_port = var.observability.jaeger.query_host_port
+  } : null
+  ingress_http_port_mapping = var.ingress_nginx.enabled ? {
+    node_port = var.ingress_nginx.http_node_port
+    host_port = var.ingress_nginx.http_host_port
+  } : null
+  ingress_https_port_mapping = var.ingress_nginx.enabled ? {
+    node_port = var.ingress_nginx.https_node_port
+    host_port = var.ingress_nginx.https_host_port
+  } : null
   recreate_revision = trimspace(try(var.kubernetes.recreate_revision, "")) != "" ? var.kubernetes.recreate_revision : var.recreate_revision
 
   depends_on = [module.postgres]
@@ -78,6 +104,21 @@ resource "terraform_data" "kind_cluster_ready" {
   input = var.kubernetes.create_cluster ? "create" : "reuse"
 
   depends_on = [module.kind_cluster]
+}
+
+module "ingress_nginx" {
+  count  = var.ingress_nginx.enabled ? 1 : 0
+  source = "../../modules/ingress-nginx"
+
+  namespace             = var.ingress_nginx.namespace
+  chart_version         = var.ingress_nginx.chart_version
+  ingress_class_name    = var.ingress_nginx.ingress_class_name
+  default_ingress_class = var.ingress_nginx.default_ingress_class
+  http_node_port        = var.ingress_nginx.http_node_port
+  https_node_port       = var.ingress_nginx.https_node_port
+  recreate_revision     = trimspace(try(var.ingress_nginx.recreate_revision, "")) != "" ? var.ingress_nginx.recreate_revision : var.recreate_revision
+
+  depends_on = [terraform_data.kind_cluster_ready]
 }
 
 module "bootstrap_namespace" {
@@ -140,4 +181,28 @@ module "kubernetes_dashboard" {
   recreate_revision = trimspace(try(var.dashboard.recreate_revision, "")) != "" ? var.dashboard.recreate_revision : var.recreate_revision
 
   depends_on = [module.dashboard_namespace]
+}
+
+
+module "observability_namespace" {
+  count  = var.observability.enabled ? 1 : 0
+  source = "../../modules/k8s-namespace"
+
+  name = var.observability.namespace
+
+  depends_on = [terraform_data.kind_cluster_ready]
+}
+
+module "observability" {
+  count  = var.observability.enabled ? 1 : 0
+  source = "../../modules/observability"
+
+  namespace         = module.observability_namespace[0].name
+  elasticsearch     = var.observability.elasticsearch
+  fluentd           = var.observability.fluentd
+  kibana            = var.observability.kibana
+  jaeger            = var.observability.jaeger
+  recreate_revision = trimspace(try(var.observability.recreate_revision, "")) != "" ? var.observability.recreate_revision : var.recreate_revision
+
+  depends_on = [module.observability_namespace, module.ingress_nginx]
 }

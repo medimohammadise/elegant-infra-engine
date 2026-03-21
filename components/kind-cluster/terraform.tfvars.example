@@ -19,3 +19,24 @@ dashboard_port_mapping = {
 }
 
 recreate_revision = ""
+
+
+observability_kibana_port_mapping = {
+  node_port = 32081
+  host_port = 7081
+}
+
+observability_jaeger_port_mapping = {
+  node_port = 31686
+  host_port = 7068
+}
+
+ingress_http_port_mapping = {
+  node_port = 32080
+  host_port = 80
+}
+
+ingress_https_port_mapping = {
+  node_port = 32443
+  host_port = 443
+}

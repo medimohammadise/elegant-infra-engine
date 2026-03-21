@@ -41,3 +41,26 @@ output "dashboard_url" {
   description = "Configured Kubernetes Dashboard URL when publicly exposed."
   value       = var.dashboard.enabled && var.dashboard.expose_public ? "https://${var.api_server_host}:${var.dashboard.host_port}" : null
 }
+
+
+output "kibana_url" {
+  description = "Configured Kibana URL when exposed publicly or through ingress."
+  value = (
+    var.observability.enabled && var.observability.kibana.enabled && (
+      var.observability.kibana.expose_public || try(var.observability.kibana.ingress.enabled, false)
+    )
+    ? local.kibana_base_url
+    : null
+  )
+}
+
+output "jaeger_query_url" {
+  description = "Configured Jaeger query URL when exposed publicly or through ingress."
+  value = (
+    var.observability.enabled && var.observability.jaeger.enabled && (
+      var.observability.jaeger.expose_public || try(var.observability.jaeger.ingress.enabled, false)
+    )
+    ? local.jaeger_base_url
+    : null
+  )
+}
