@@ -41,3 +41,24 @@ output "headlamp_url" {
   description = "Configured Headlamp URL when publicly exposed."
   value       = var.headlamp.enabled && var.headlamp.expose_public ? "http://${var.api_server_host}:${var.headlamp.host_port}" : null
 }
+
+output "keycloak_url" {
+  description = "Configured external Keycloak URL."
+  value       = var.keycloak_url
+}
+
+output "exposed_urls" {
+  description = "Consolidated platform endpoints, including optional external dependencies."
+  value = {
+    kubernetes_api = var.kubernetes.create_cluster ? module.kind_cluster[0].endpoint : local.kind_cluster_endpoint
+    registry       = "http://${var.api_server_host}:${var.registry.port}"
+    registry_ui = (
+      contains(["127.0.0.1", "localhost"], var.registry.ui_bind)
+      ? "http://${var.registry.ui_bind}:${var.registry.ui_port}"
+      : "http://${var.api_server_host}:${var.registry.ui_port}"
+    )
+    backstage = var.backstage.enabled ? local.backstage_base_url : null
+    headlamp  = var.headlamp.enabled && var.headlamp.expose_public ? "http://${var.api_server_host}:${var.headlamp.host_port}" : null
+    keycloak  = var.keycloak_url
+  }
+}

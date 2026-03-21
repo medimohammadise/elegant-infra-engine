@@ -1,6 +1,8 @@
 # elegant-infra-engine
 
-This repository provisions a remote Docker registry, PostgreSQL, a `kind` Kubernetes cluster, Backstage, and Headlamp with Terraform. The layout is now split into reusable modules and deployable component roots so you can apply the full platform or only the parts you need.
+This repository provisions a remote Docker registry, PostgreSQL, a `kind` Kubernetes cluster, Backstage, Headlamp, and Keycloak with Terraform. The layout is now split into reusable modules and deployable component roots so you can apply the full platform or only the parts you need.
+
+For a consolidated list of exposed endpoints, see [docs/exposed-urls.md](/Users/mehdi/MyProject/elegant-infra-engine/docs/exposed-urls.md).
 
 ## Layout
 
@@ -12,6 +14,7 @@ components/
   kind-cluster/         Deploy the remote kind cluster
   backstage/            Deploy Backstage into an existing cluster
   headlamp/             Deploy Headlamp into an existing cluster
+  keycloak/             Deploy Keycloak into an existing cluster
 modules/
   Reusable Terraform modules shared by the component roots
 scripts/
@@ -32,6 +35,7 @@ flowchart TD
   Components --> KindComponent["kind-cluster/"]
   Components --> BackstageComponent["backstage/"]
   Components --> HeadlampComponent["headlamp/"]
+  Components --> KeycloakComponent["keycloak/"]
 
   Modules --> DockerNetwork["docker-network/"]
   Modules --> RegistryModule["docker-registry/"]
@@ -41,6 +45,7 @@ flowchart TD
   Modules --> NamespaceModule["k8s-namespace/"]
   Modules --> BackstageModule["backstage/"]
   Modules --> HeadlampModule["headlamp/"]
+  Modules --> KeycloakModule["keycloak/"]
 
   Scripts --> BackstageScript["backstage-postrender.sh"]
 ```
@@ -70,14 +75,18 @@ flowchart TD
   BackstageComponent --> Backstage
   HeadlampComponent["components/headlamp"] --> Namespace
   HeadlampComponent --> Headlamp
+  KeycloakComponent["components/keycloak"] --> Namespace
+  KeycloakComponent --> KeycloakModule["modules/keycloak"]
 ```
 
 ```mermaid
 flowchart LR
   Registry["Docker Registry"] --> BackstageApp["Backstage"]
   PostgresDb["PostgreSQL"] --> BackstageApp
+  PostgresDb --> KeycloakApp["Keycloak"]
   KindCluster["kind Cluster"] --> BackstageApp
   KindCluster --> HeadlampUi["Headlamp"]
+  KindCluster --> KeycloakApp
 ```
 
 ## Prerequisites
@@ -140,6 +149,7 @@ Use the component roots when you want independent deployment lifecycles:
 - `components/kind-cluster` for the remote `kind` cluster and kubeconfig
 - `components/backstage` for Backstage on an existing cluster
 - `components/headlamp` for Headlamp on an existing cluster
+- `components/keycloak` for Keycloak on an existing cluster
 
 Each component root has its own `terraform.tfvars.example`.
 
@@ -224,7 +234,7 @@ terraform plan
 terraform apply
 ```
 
-This root creates the remote `kind` cluster and writes a kubeconfig file locally. If you want public Backstage or Headlamp access later, reserve the needed host-port mappings here with `backstage_port_mapping` and `headlamp_port_mapping`.
+This root creates the remote `kind` cluster and writes a kubeconfig file locally. If you want public Backstage, Headlamp, or Keycloak access later, reserve the needed host-port mappings here with `backstage_port_mapping`, `headlamp_port_mapping`, and `keycloak_port_mapping`.
 
 ### Backstage
 
@@ -269,6 +279,26 @@ Generate a service-account token for Headlamp with:
 
 ```bash
 kubectl --kubeconfig <path-to-kubeconfig> create token headlamp -n headlamp
+```
+
+### Keycloak
+
+```bash
+cd components/keycloak
+cp terraform.tfvars.example terraform.tfvars
+terraform init
+terraform plan
+terraform apply
+```
+
+This root expects an existing cluster and an existing PostgreSQL instance. For the current Docker-hosted PostgreSQL pattern, use `host.docker.internal` as the database host from inside the cluster.
+
+If `keycloak.expose_public = true`, the cluster must already have the matching host-port mapping reserved by `components/kind-cluster`. Otherwise use `kubectl port-forward`.
+
+When `keycloak.expose_public = true`, access Keycloak at:
+
+```text
+http://<api_server_host>:8080/
 ```
 
 ## Force Recreate

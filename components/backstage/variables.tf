@@ -38,3 +38,10 @@ variable "recreate_revision" {
   description = "Change this token to force replacement of the Backstage release."
   default     = ""
 }
+
+variable "keycloak_url" {
+  type        = string
+  description = "Optional externally managed Keycloak base URL to surface with the Backstage endpoints."
+  default     = null
+  nullable    = true
+}

@@ -69,7 +69,8 @@ module "kind_cluster" {
     node_port = var.headlamp.node_port
     host_port = var.headlamp.host_port
   } : null
-  recreate_revision = trimspace(try(var.kubernetes.recreate_revision, "")) != "" ? var.kubernetes.recreate_revision : var.recreate_revision
+  keycloak_port_mapping = var.keycloak_port_mapping
+  recreate_revision     = trimspace(try(var.kubernetes.recreate_revision, "")) != "" ? var.kubernetes.recreate_revision : var.recreate_revision
 
   depends_on = [module.postgres]
 }
