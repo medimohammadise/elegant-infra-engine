@@ -10,5 +10,6 @@ module "kind_cluster" {
   kubeconfig_path        = try(var.kubernetes.kubeconfig_path, null)
   backstage_port_mapping = var.backstage_port_mapping
   dashboard_port_mapping = var.dashboard_port_mapping
+  zipkin_port_mapping    = var.zipkin_port_mapping
   recreate_revision      = var.recreate_revision
 }

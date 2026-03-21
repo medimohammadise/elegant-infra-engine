@@ -93,6 +93,22 @@ variable "dashboard" {
   default     = {}
 }
 
+variable "zipkin" {
+  type = object({
+    enabled           = optional(bool, false)
+    namespace         = optional(string, "zipkin")
+    release_name      = optional(string, "zipkin")
+    image             = optional(string, "openzipkin/zipkin:3")
+    expose_public     = optional(bool, false)
+    service_port      = optional(number, 9411)
+    node_port         = optional(number, 32411)
+    host_port         = optional(number, 9411)
+    recreate_revision = optional(string, "")
+  })
+  description = "Zipkin deployment settings."
+  default     = {}
+}
+
 variable "recreate_revision" {
   type        = string
   description = "Global replacement token passed to modules that support one-shot recreation."

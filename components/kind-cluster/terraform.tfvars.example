@@ -19,3 +19,8 @@ dashboard_port_mapping = {
 }
 
 recreate_revision = ""
+
+zipkin_port_mapping = {
+  node_port = 32411
+  host_port = 9411
+}

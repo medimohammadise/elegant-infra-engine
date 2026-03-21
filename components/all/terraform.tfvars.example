@@ -52,3 +52,14 @@ dashboard = {
 }
 
 recreate_revision = ""
+
+zipkin = {
+  enabled      = false
+  namespace    = "zipkin"
+  release_name = "zipkin"
+  image        = "openzipkin/zipkin:3"
+  expose_public = false
+  service_port = 9411
+  node_port    = 32411
+  host_port    = 9411
+}
