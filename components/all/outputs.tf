@@ -41,3 +41,8 @@ output "dashboard_url" {
   description = "Configured Kubernetes Dashboard URL when publicly exposed."
   value       = var.dashboard.enabled && var.dashboard.expose_public ? "https://${var.api_server_host}:${var.dashboard.host_port}" : null
 }
+
+output "zipkin_url" {
+  description = "Configured Zipkin URL when publicly exposed."
+  value       = var.zipkin.enabled && var.zipkin.expose_public ? "http://${var.api_server_host}:${var.zipkin.host_port}" : null
+}

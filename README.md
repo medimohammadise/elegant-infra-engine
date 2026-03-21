@@ -1,6 +1,6 @@
 # elegant-infra-engine
 
-This repository provisions a remote Docker registry, PostgreSQL, a `kind` Kubernetes cluster, Backstage, and Kubernetes Dashboard with Terraform. The layout is now split into reusable modules and deployable component roots so you can apply the full platform or only the parts you need.
+This repository provisions a remote Docker registry, PostgreSQL, a `kind` Kubernetes cluster, Backstage, Kubernetes Dashboard, and Zipkin with Terraform. The layout is now split into reusable modules and deployable component roots so you can apply the full platform or only the parts you need.
 
 ## Layout
 
@@ -12,6 +12,7 @@ components/
   kind-cluster/         Deploy the remote kind cluster
   backstage/            Deploy Backstage into an existing cluster
   kubernetes-dashboard/ Deploy Kubernetes Dashboard into an existing cluster
+  zipkin/               Deploy Zipkin into an existing cluster
 modules/
   Reusable Terraform modules shared by the component roots
 scripts/
@@ -32,6 +33,7 @@ flowchart TD
   Components --> KindComponent["kind-cluster/"]
   Components --> BackstageComponent["backstage/"]
   Components --> DashboardComponent["kubernetes-dashboard/"]
+  Components --> ZipkinComponent["zipkin/"]
 
   Modules --> DockerNetwork["docker-network/"]
   Modules --> RegistryModule["docker-registry/"]
@@ -41,6 +43,7 @@ flowchart TD
   Modules --> NamespaceModule["k8s-namespace/"]
   Modules --> BackstageModule["backstage/"]
   Modules --> DashboardModule["kubernetes-dashboard/"]
+  Modules --> ZipkinModule["zipkin/"]
 
   Scripts --> BackstageScript["backstage-postrender.sh"]
 ```
@@ -57,6 +60,7 @@ flowchart TD
   All --> Namespace["modules/k8s-namespace"]
   All --> Backstage["modules/backstage"]
   All --> Dashboard["modules/kubernetes-dashboard"]
+  All --> Zipkin["modules/zipkin"]
 
   RegistryComponent["components/docker-registry"] --> DockerNetwork
   RegistryComponent --> Registry
@@ -70,6 +74,8 @@ flowchart TD
   BackstageComponent --> Backstage
   DashboardComponent["components/kubernetes-dashboard"] --> Namespace
   DashboardComponent --> Dashboard
+  ZipkinComponent["components/zipkin"] --> Namespace
+  ZipkinComponent --> Zipkin
 ```
 
 ```mermaid
@@ -78,6 +84,7 @@ flowchart LR
   PostgresDb["PostgreSQL"] --> BackstageApp
   KindCluster["kind Cluster"] --> BackstageApp
   KindCluster --> DashboardUi["Kubernetes Dashboard"]
+  KindCluster --> ZipkinUi["Zipkin"]
 ```
 
 ## Prerequisites
@@ -140,6 +147,7 @@ Use the component roots when you want independent deployment lifecycles:
 - `components/kind-cluster` for the remote `kind` cluster and kubeconfig
 - `components/backstage` for Backstage on an existing cluster
 - `components/kubernetes-dashboard` for Dashboard on an existing cluster
+- `components/zipkin` for Zipkin on an existing cluster
 
 Each component root has its own `terraform.tfvars.example`.
 
@@ -224,7 +232,7 @@ terraform plan
 terraform apply
 ```
 
-This root creates the remote `kind` cluster and writes a kubeconfig file locally. If you want public Backstage or Dashboard access later, reserve the needed host-port mappings here with `backstage_port_mapping` and `dashboard_port_mapping`.
+This root creates the remote `kind` cluster and writes a kubeconfig file locally. If you want public Backstage, Dashboard, or Zipkin access later, reserve the needed host-port mappings here with `backstage_port_mapping`, `dashboard_port_mapping`, and `zipkin_port_mapping`.
 
 ### Backstage
 
@@ -257,6 +265,19 @@ Generate a dashboard login token with:
 ```bash
 kubectl --kubeconfig <path-to-kubeconfig> -n kubernetes-dashboard create token admin-user
 ```
+
+
+### Zipkin
+
+```bash
+cd components/zipkin
+cp terraform.tfvars.example terraform.tfvars
+terraform init
+terraform plan
+terraform apply
+```
+
+If `zipkin.expose_public = true`, the cluster must already have the matching host-port mapping reserved by `components/kind-cluster` or `components/all`.
 
 ## Force Recreate
 

@@ -69,6 +69,10 @@ module "kind_cluster" {
     node_port = var.dashboard.node_port
     host_port = var.dashboard.host_port
   } : null
+  zipkin_port_mapping = var.zipkin.enabled && var.zipkin.expose_public ? {
+    node_port = var.zipkin.node_port
+    host_port = var.zipkin.host_port
+  } : null
   recreate_revision = trimspace(try(var.kubernetes.recreate_revision, "")) != "" ? var.kubernetes.recreate_revision : var.recreate_revision
 
   depends_on = [module.postgres]
@@ -140,4 +144,29 @@ module "kubernetes_dashboard" {
   recreate_revision = trimspace(try(var.dashboard.recreate_revision, "")) != "" ? var.dashboard.recreate_revision : var.recreate_revision
 
   depends_on = [module.dashboard_namespace]
+}
+
+
+module "zipkin_namespace" {
+  count  = var.zipkin.enabled ? 1 : 0
+  source = "../../modules/k8s-namespace"
+
+  name = var.zipkin.namespace
+
+  depends_on = [terraform_data.kind_cluster_ready]
+}
+
+module "zipkin" {
+  count  = var.zipkin.enabled ? 1 : 0
+  source = "../../modules/zipkin"
+
+  namespace         = module.zipkin_namespace[0].name
+  release_name      = var.zipkin.release_name
+  image             = var.zipkin.image
+  service_type      = var.zipkin.expose_public ? "NodePort" : "ClusterIP"
+  service_port      = var.zipkin.service_port
+  node_port         = var.zipkin.expose_public ? var.zipkin.node_port : null
+  recreate_revision = trimspace(try(var.zipkin.recreate_revision, "")) != "" ? var.zipkin.recreate_revision : var.recreate_revision
+
+  depends_on = [module.zipkin_namespace]
 }
