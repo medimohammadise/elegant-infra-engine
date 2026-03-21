@@ -33,7 +33,6 @@ flowchart TD
   Components --> KindComponent["kind-cluster/"]
   Components --> BackstageComponent["backstage/"]
   Components --> DashboardComponent["kubernetes-dashboard/"]
-  Components --> ZipkinComponent["zipkin/"]
 
   Modules --> DockerNetwork["docker-network/"]
   Modules --> RegistryModule["docker-registry/"]
@@ -43,7 +42,6 @@ flowchart TD
   Modules --> NamespaceModule["k8s-namespace/"]
   Modules --> BackstageModule["backstage/"]
   Modules --> DashboardModule["kubernetes-dashboard/"]
-  Modules --> ZipkinModule["zipkin/"]
 
   Scripts --> BackstageScript["backstage-postrender.sh"]
 ```
@@ -60,7 +58,6 @@ flowchart TD
   All --> Namespace["modules/k8s-namespace"]
   All --> Backstage["modules/backstage"]
   All --> Dashboard["modules/kubernetes-dashboard"]
-  All --> Zipkin["modules/zipkin"]
 
   RegistryComponent["components/docker-registry"] --> DockerNetwork
   RegistryComponent --> Registry
@@ -74,8 +71,6 @@ flowchart TD
   BackstageComponent --> Backstage
   DashboardComponent["components/kubernetes-dashboard"] --> Namespace
   DashboardComponent --> Dashboard
-  ZipkinComponent["components/zipkin"] --> Namespace
-  ZipkinComponent --> Zipkin
 ```
 
 ```mermaid
@@ -84,7 +79,6 @@ flowchart LR
   PostgresDb["PostgreSQL"] --> BackstageApp
   KindCluster["kind Cluster"] --> BackstageApp
   KindCluster --> DashboardUi["Kubernetes Dashboard"]
-  KindCluster --> ZipkinUi["Zipkin"]
 ```
 
 ## Prerequisites
