@@ -1,7 +1,15 @@
-# Optional: set kubeconfig_path explicitly.
-# kubeconfig_path = "../kind-cluster/blitzinfra-kubeconfig"
+kubeconfig_path = "../kind-cluster/blitzinfra-kubeconfig"
 api_server_host = "myserver"
 cluster_name    = "blitzinfra"
+
+ingress_nginx = {
+  enabled            = true
+  namespace          = "ingress-nginx"
+  chart_version      = "4.14.2"
+  ingress_class_name = "nginx"
+  http_node_port     = 32080
+  https_node_port    = 32443
+}
 
 observability = {
   namespace = "observability"
@@ -21,19 +29,29 @@ observability = {
   kibana = {
     enabled       = true
     chart_version = "8.5.1"
-    expose_public = true
+    expose_public = false
     node_port     = 32081
     host_port     = 7081
+    ingress = {
+      enabled    = true
+      host       = "kibana.example.com"
+      class_name = "nginx"
+    }
   }
 
   jaeger = {
     enabled          = true
     chart_version    = "3.4.1"
-    expose_public    = true
+    expose_public    = false
     query_node_port  = 31686
     query_host_port  = 7068
     collector_memory = "256Mi"
     query_memory     = "256Mi"
+    ingress = {
+      enabled    = true
+      host       = "jaeger.example.com"
+      class_name = "nginx"
+    }
   }
 }
 

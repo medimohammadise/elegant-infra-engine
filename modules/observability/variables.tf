@@ -30,6 +30,15 @@ variable "kibana" {
     expose_public = optional(bool, false)
     node_port     = optional(number, 32081)
     host_port     = optional(number, 7081)
+    ingress = optional(object({
+      enabled         = optional(bool, false)
+      host            = string
+      class_name      = optional(string)
+      annotations     = optional(map(string), {})
+      path            = optional(string, "/")
+      path_type       = optional(string, "Prefix")
+      tls_secret_name = optional(string)
+    }))
   })
   description = "Kibana Helm settings for log exploration dashboards."
   default     = {}
@@ -44,6 +53,15 @@ variable "jaeger" {
     query_host_port  = optional(number, 7068)
     collector_memory = optional(string, "256Mi")
     query_memory     = optional(string, "256Mi")
+    ingress = optional(object({
+      enabled         = optional(bool, false)
+      host            = string
+      class_name      = optional(string)
+      annotations     = optional(map(string), {})
+      path            = optional(string, "/")
+      path_type       = optional(string, "Prefix")
+      tls_secret_name = optional(string)
+    }))
   })
   description = "Jaeger Helm settings for distributed tracing and APM-like visibility."
   default     = {}

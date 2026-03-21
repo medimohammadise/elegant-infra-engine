@@ -43,6 +43,7 @@ flowchart TD
   Modules --> NamespaceModule["k8s-namespace/"]
   Modules --> BackstageModule["backstage/"]
   Modules --> DashboardModule["kubernetes-dashboard/"]
+  Modules --> IngressNginxModule["ingress-nginx/"]
   Modules --> ObservabilityModule["observability/"]
 
   Scripts --> BackstageScript["backstage-postrender.sh"]
@@ -60,6 +61,7 @@ flowchart TD
   All --> Namespace["modules/k8s-namespace"]
   All --> Backstage["modules/backstage"]
   All --> Dashboard["modules/kubernetes-dashboard"]
+  All --> IngressNginx["modules/ingress-nginx"]
   All --> Observability["modules/observability"]
 
   RegistryComponent["components/docker-registry"] --> DockerNetwork
@@ -84,6 +86,9 @@ flowchart LR
   PostgresDb["PostgreSQL"] --> BackstageApp
   KindCluster["kind Cluster"] --> BackstageApp
   KindCluster --> DashboardUi["Kubernetes Dashboard"]
+  KindCluster --> Ingress["ingress-nginx"]
+  Ingress --> KibanaUi["Kibana"]
+  Ingress --> JaegerUi["Jaeger"]
 ```
 
 ## Prerequisites
@@ -233,6 +238,8 @@ terraform apply
 
 This root creates the remote `kind` cluster and writes a kubeconfig file locally. If you want public Backstage or Dashboard access later, reserve the needed host-port mappings here with `backstage_port_mapping` and `dashboard_port_mapping`.
 
+If you plan to expose services through `ingress-nginx`, also reserve `ingress_http_port_mapping` and `ingress_https_port_mapping` here so the remote host forwards ports `80` and `443` into the kind control-plane node.
+
 ### Backstage
 
 ```bash
@@ -286,6 +293,11 @@ Leave it unchanged during normal applies.
 ### Observability (EFK + Jaeger)
 
 ```bash
+cd components/kind-cluster
+cp terraform.tfvars.example terraform.tfvars
+terraform init
+terraform apply
+
 cd components/observability
 cp terraform.tfvars.example terraform.tfvars
 terraform init
@@ -293,7 +305,9 @@ terraform plan
 terraform apply
 ```
 
-Before applying, you can set `kubeconfig_path` explicitly (recommended: `../kind-cluster/blitzinfra-kubeconfig` from inside `components/observability`). If that path is missing, the provider falls back to your default kubeconfig loading (`KUBECONFIG` / `~/.kube/config`).
+This root expects an existing cluster and a valid kubeconfig file. The example uses `../kind-cluster/blitzinfra-kubeconfig`, which is created by `components/kind-cluster`.
+
+If `ingress_nginx.enabled = true`, this root will also install the `ingress-nginx` controller. On the repository's remote-kind pattern, you still need the kind cluster to have `ingress_http_port_mapping` and `ingress_https_port_mapping` reserved first if you want remote traffic to reach ports `80` and `443`.
 
 This root installs:
 
@@ -341,6 +355,53 @@ Remote access from other machines:
 - Use `http://<api_server_host>:<jaeger_query_host_port>` for Jaeger.
 - Keep `kind` host-port mappings and firewall/security-group rules open for those ports.
 
+### Ingress-based access
+
+The observability module supports optional Ingress resources for Kibana and Jaeger. This repository can now also install `ingress-nginx`:
+
+- `components/all`: enable `ingress_nginx.enabled = true` and the controller is installed automatically.
+- `components/observability`: enable `ingress_nginx.enabled = true` if you want this root to install the controller into an existing cluster.
+- `components/kind-cluster`: if the cluster is the repository-managed remote kind cluster, reserve `ingress_http_port_mapping` and `ingress_https_port_mapping` so the remote host exposes ports `80` and `443`.
+
+Example:
+
+```hcl
+ingress_nginx = {
+  enabled            = true
+  namespace          = "ingress-nginx"
+  chart_version      = "4.14.2"
+  ingress_class_name = "nginx"
+  http_node_port     = 32080
+  https_node_port    = 32443
+}
+
+observability = {
+  kibana = {
+    enabled       = true
+    expose_public = false
+    ingress = {
+      enabled    = true
+      host       = "kibana.example.com"
+      class_name = "nginx"
+    }
+  }
+
+  jaeger = {
+    enabled       = true
+    expose_public = false
+    ingress = {
+      enabled    = true
+      host       = "jaeger.example.com"
+      class_name = "nginx"
+    }
+  }
+}
+```
+
+If you want TLS, also set `tls_secret_name` in each ingress block and provision the secret through your ingress workflow.
+
+For simple DNS during development, a wildcard helper such as `nip.io` works well. For example, if your remote host is `myserver` or resolves to `203.0.113.10`, you can use hosts like `kibana.203.0.113.10.nip.io` and `jaeger.203.0.113.10.nip.io`.
+
 ## Using Kibana for Log Analysis
 
 1. Open Kibana and create a data view for `logstash-*`.
@@ -381,7 +442,7 @@ Remote access from other machines:
   - Check Fluentd logs for Elasticsearch connection errors.
   - Verify Elasticsearch health: `kubectl -n observability get pods -l app=elasticsearch-master`
 - **Provider cannot load Kubernetes client config / default cluster has no server defined**
-  - Set `kubeconfig_path` to a valid file, or leave it unset and ensure `KUBECONFIG`/`~/.kube/config` is valid.
+  - Set `kubeconfig_path` to a valid file.
   - Run `components/kind-cluster` first if you plan to use `../kind-cluster/blitzinfra-kubeconfig`.
   - Confirm the selected kubeconfig context contains a cluster `server` endpoint.
 - **Kibana unavailable**

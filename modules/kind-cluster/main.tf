@@ -85,6 +85,26 @@ resource "kind_cluster" "this" {
           protocol       = "TCP"
         }
       }
+
+      dynamic "extra_port_mappings" {
+        for_each = var.ingress_http_port_mapping != null ? [var.ingress_http_port_mapping] : []
+        content {
+          container_port = extra_port_mappings.value.node_port
+          host_port      = extra_port_mappings.value.host_port
+          listen_address = "0.0.0.0"
+          protocol       = "TCP"
+        }
+      }
+
+      dynamic "extra_port_mappings" {
+        for_each = var.ingress_https_port_mapping != null ? [var.ingress_https_port_mapping] : []
+        content {
+          container_port = extra_port_mappings.value.node_port
+          host_port      = extra_port_mappings.value.host_port
+          listen_address = "0.0.0.0"
+          protocol       = "TCP"
+        }
+      }
     }
 
     dynamic "node" {

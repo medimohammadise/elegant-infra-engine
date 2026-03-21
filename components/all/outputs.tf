@@ -44,11 +44,23 @@ output "dashboard_url" {
 
 
 output "kibana_url" {
-  description = "Configured Kibana URL when publicly exposed."
-  value       = var.observability.enabled && var.observability.kibana.enabled && var.observability.kibana.expose_public ? local.kibana_base_url : null
+  description = "Configured Kibana URL when exposed publicly or through ingress."
+  value = (
+    var.observability.enabled && var.observability.kibana.enabled && (
+      var.observability.kibana.expose_public || try(var.observability.kibana.ingress.enabled, false)
+    )
+    ? local.kibana_base_url
+    : null
+  )
 }
 
 output "jaeger_query_url" {
-  description = "Configured Jaeger query URL when publicly exposed."
-  value       = var.observability.enabled && var.observability.jaeger.enabled && var.observability.jaeger.expose_public ? local.jaeger_base_url : null
+  description = "Configured Jaeger query URL when exposed publicly or through ingress."
+  value = (
+    var.observability.enabled && var.observability.jaeger.enabled && (
+      var.observability.jaeger.expose_public || try(var.observability.jaeger.ingress.enabled, false)
+    )
+    ? local.jaeger_base_url
+    : null
+  )
 }

@@ -62,3 +62,21 @@ variable "observability_jaeger_port_mapping" {
   description = "Optional NodePort to host-port mapping reserved for Jaeger query."
   default     = null
 }
+
+variable "ingress_http_port_mapping" {
+  type = object({
+    node_port = number
+    host_port = number
+  })
+  description = "Optional NodePort to host-port mapping reserved for ingress HTTP."
+  default     = null
+}
+
+variable "ingress_https_port_mapping" {
+  type = object({
+    node_port = number
+    host_port = number
+  })
+  description = "Optional NodePort to host-port mapping reserved for ingress HTTPS."
+  default     = null
+}
