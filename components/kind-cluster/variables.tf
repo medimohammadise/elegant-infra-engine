@@ -38,6 +38,16 @@ variable "dashboard_port_mapping" {
   default     = null
 }
 
+
+variable "keycloak_port_mapping" {
+  type = object({
+    node_port = number
+    host_port = number
+  })
+  description = "Optional NodePort to host-port mapping reserved for Keycloak."
+  default     = null
+}
+
 variable "recreate_revision" {
   type        = string
   description = "Change this token to force replacement of the kind cluster."

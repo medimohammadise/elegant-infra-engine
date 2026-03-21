@@ -51,4 +51,17 @@ dashboard = {
   admin_user_name   = "admin-user"
 }
 
+
+keycloak = {
+  enabled        = false
+  namespace      = "keycloak"
+  image_tag      = "26.5.5"
+  replicas       = 1
+  expose_public  = false
+  node_port      = 32080
+  host_port      = 8080
+  admin_username = "admin"
+  admin_password = "change-me"
+}
+
 recreate_revision = ""

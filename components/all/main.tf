@@ -69,6 +69,10 @@ module "kind_cluster" {
     node_port = var.dashboard.node_port
     host_port = var.dashboard.host_port
   } : null
+  keycloak_port_mapping = var.keycloak.enabled && var.keycloak.expose_public ? {
+    node_port = var.keycloak.node_port
+    host_port = var.keycloak.host_port
+  } : null
   recreate_revision = trimspace(try(var.kubernetes.recreate_revision, "")) != "" ? var.kubernetes.recreate_revision : var.recreate_revision
 
   depends_on = [module.postgres]
@@ -140,4 +144,30 @@ module "kubernetes_dashboard" {
   recreate_revision = trimspace(try(var.dashboard.recreate_revision, "")) != "" ? var.dashboard.recreate_revision : var.recreate_revision
 
   depends_on = [module.dashboard_namespace]
+}
+
+module "keycloak_namespace" {
+  count  = var.keycloak.enabled ? 1 : 0
+  source = "../../modules/k8s-namespace"
+
+  name = var.keycloak.namespace
+
+  depends_on = [terraform_data.kind_cluster_ready]
+}
+
+module "keycloak" {
+  count  = var.keycloak.enabled ? 1 : 0
+  source = "../../modules/keycloak"
+
+  namespace         = module.keycloak_namespace[0].name
+  image_repository  = var.keycloak.image_repository
+  image_tag         = var.keycloak.image_tag
+  replicas          = var.keycloak.replicas
+  service_type      = var.keycloak.expose_public ? "NodePort" : "ClusterIP"
+  node_port         = var.keycloak.expose_public ? var.keycloak.node_port : null
+  admin_username    = var.keycloak.admin_username
+  admin_password    = var.keycloak.admin_password
+  recreate_revision = trimspace(try(var.keycloak.recreate_revision, "")) != "" ? var.keycloak.recreate_revision : var.recreate_revision
+
+  depends_on = [module.keycloak_namespace]
 }

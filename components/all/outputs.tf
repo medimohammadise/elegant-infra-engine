@@ -41,3 +41,8 @@ output "dashboard_url" {
   description = "Configured Kubernetes Dashboard URL when publicly exposed."
   value       = var.dashboard.enabled && var.dashboard.expose_public ? "https://${var.api_server_host}:${var.dashboard.host_port}" : null
 }
+
+output "keycloak_url" {
+  description = "Configured Keycloak URL when publicly exposed."
+  value       = var.keycloak.enabled && var.keycloak.expose_public ? "http://${var.api_server_host}:${var.keycloak.host_port}" : null
+}

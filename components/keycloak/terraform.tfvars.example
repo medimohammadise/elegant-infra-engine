@@ -1,0 +1,14 @@
+kubeconfig_path = "./blitzinfra-kubeconfig"
+cluster_name    = "blitzinfra"
+
+keycloak = {
+  namespace      = "keycloak"
+  image_tag      = "26.5.5"
+  replicas       = 1
+  expose_public  = false
+  node_port      = 32080
+  admin_username = "admin"
+  admin_password = "change-me"
+}
+
+recreate_revision = ""

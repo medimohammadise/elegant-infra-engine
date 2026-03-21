@@ -93,6 +93,26 @@ variable "dashboard" {
   default     = {}
 }
 
+
+variable "keycloak" {
+  type = object({
+    enabled           = optional(bool, false)
+    namespace         = optional(string, "keycloak")
+    image_repository  = optional(string, "quay.io/keycloak/keycloak")
+    image_tag         = optional(string, "26.5.5")
+    replicas          = optional(number, 1)
+    expose_public     = optional(bool, false)
+    node_port         = optional(number, 32080)
+    host_port         = optional(number, 8080)
+    admin_username    = optional(string, "admin")
+    admin_password    = optional(string, "change-me")
+    recreate_revision = optional(string, "")
+  })
+  description = "Keycloak deployment settings."
+  sensitive   = true
+  default     = {}
+}
+
 variable "recreate_revision" {
   type        = string
   description = "Global replacement token passed to modules that support one-shot recreation."
