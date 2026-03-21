@@ -57,7 +57,7 @@ resource "kind_cluster" "this" {
       }
 
       dynamic "extra_port_mappings" {
-        for_each = var.dashboard_port_mapping != null ? [var.dashboard_port_mapping] : []
+        for_each = var.headlamp_port_mapping != null ? [var.headlamp_port_mapping] : []
         content {
           container_port = extra_port_mappings.value.node_port
           host_port      = extra_port_mappings.value.host_port

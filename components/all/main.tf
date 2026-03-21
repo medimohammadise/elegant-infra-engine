@@ -65,9 +65,9 @@ module "kind_cluster" {
     node_port = var.backstage.node_port
     host_port = var.backstage.host_port
   } : null
-  dashboard_port_mapping = var.dashboard.enabled && var.dashboard.expose_public ? {
-    node_port = var.dashboard.node_port
-    host_port = var.dashboard.host_port
+  headlamp_port_mapping = var.headlamp.enabled && var.headlamp.expose_public ? {
+    node_port = var.headlamp.node_port
+    host_port = var.headlamp.host_port
   } : null
   recreate_revision = trimspace(try(var.kubernetes.recreate_revision, "")) != "" ? var.kubernetes.recreate_revision : var.recreate_revision
 
@@ -118,26 +118,30 @@ module "backstage" {
   depends_on = [module.backstage_namespace]
 }
 
-module "dashboard_namespace" {
-  count  = var.dashboard.enabled ? 1 : 0
+module "headlamp_namespace" {
+  count  = var.headlamp.enabled ? 1 : 0
   source = "../../modules/k8s-namespace"
 
-  name = var.dashboard.namespace
+  name = var.headlamp.namespace
 
   depends_on = [terraform_data.kind_cluster_ready]
 }
 
-module "kubernetes_dashboard" {
-  count  = var.dashboard.enabled ? 1 : 0
-  source = "../../modules/kubernetes-dashboard"
+module "headlamp" {
+  count  = var.headlamp.enabled ? 1 : 0
+  source = "../../modules/headlamp"
 
-  namespace         = module.dashboard_namespace[0].name
-  chart_url         = var.dashboard.chart_url
-  service_type      = var.dashboard.expose_public ? "NodePort" : "ClusterIP"
-  node_port         = var.dashboard.expose_public ? var.dashboard.node_port : null
-  create_admin_user = var.dashboard.create_admin_user
-  admin_user_name   = var.dashboard.admin_user_name
-  recreate_revision = trimspace(try(var.dashboard.recreate_revision, "")) != "" ? var.dashboard.recreate_revision : var.recreate_revision
+  namespace                   = module.headlamp_namespace[0].name
+  chart_repository            = var.headlamp.chart_repository
+  chart_name                  = var.headlamp.chart_name
+  chart_version               = var.headlamp.chart_version
+  service_type                = var.headlamp.expose_public ? "NodePort" : "ClusterIP"
+  node_port                   = var.headlamp.expose_public ? var.headlamp.node_port : null
+  create_service_account      = var.headlamp.create_service_account
+  service_account_name        = var.headlamp.service_account_name
+  create_cluster_role_binding = var.headlamp.create_cluster_role_binding
+  cluster_role_name           = var.headlamp.cluster_role_name
+  recreate_revision           = trimspace(try(var.headlamp.recreate_revision, "")) != "" ? var.headlamp.recreate_revision : var.recreate_revision
 
-  depends_on = [module.dashboard_namespace]
+  depends_on = [module.headlamp_namespace]
 }

@@ -13,7 +13,7 @@ backstage_port_mapping = {
   host_port = 7007
 }
 
-dashboard_port_mapping = {
+headlamp_port_mapping = {
   node_port = 32443
   host_port = 8443
 }

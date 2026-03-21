@@ -1,6 +1,6 @@
 # elegant-infra-engine
 
-This repository provisions a remote Docker registry, PostgreSQL, a `kind` Kubernetes cluster, Backstage, and Kubernetes Dashboard with Terraform. The layout is now split into reusable modules and deployable component roots so you can apply the full platform or only the parts you need.
+This repository provisions a remote Docker registry, PostgreSQL, a `kind` Kubernetes cluster, Backstage, and Headlamp with Terraform. The layout is now split into reusable modules and deployable component roots so you can apply the full platform or only the parts you need.
 
 ## Layout
 
@@ -11,7 +11,7 @@ components/
   postgres/             Deploy PostgreSQL
   kind-cluster/         Deploy the remote kind cluster
   backstage/            Deploy Backstage into an existing cluster
-  kubernetes-dashboard/ Deploy Kubernetes Dashboard into an existing cluster
+  headlamp/             Deploy Headlamp into an existing cluster
 modules/
   Reusable Terraform modules shared by the component roots
 scripts/
@@ -31,7 +31,7 @@ flowchart TD
   Components --> PostgresComponent["postgres/"]
   Components --> KindComponent["kind-cluster/"]
   Components --> BackstageComponent["backstage/"]
-  Components --> DashboardComponent["kubernetes-dashboard/"]
+  Components --> HeadlampComponent["headlamp/"]
 
   Modules --> DockerNetwork["docker-network/"]
   Modules --> RegistryModule["docker-registry/"]
@@ -40,7 +40,7 @@ flowchart TD
   Modules --> KindModule["kind-cluster/"]
   Modules --> NamespaceModule["k8s-namespace/"]
   Modules --> BackstageModule["backstage/"]
-  Modules --> DashboardModule["kubernetes-dashboard/"]
+  Modules --> HeadlampModule["headlamp/"]
 
   Scripts --> BackstageScript["backstage-postrender.sh"]
 ```
@@ -56,7 +56,7 @@ flowchart TD
   All --> Kind["modules/kind-cluster"]
   All --> Namespace["modules/k8s-namespace"]
   All --> Backstage["modules/backstage"]
-  All --> Dashboard["modules/kubernetes-dashboard"]
+  All --> Headlamp["modules/headlamp"]
 
   RegistryComponent["components/docker-registry"] --> DockerNetwork
   RegistryComponent --> Registry
@@ -68,8 +68,8 @@ flowchart TD
   KindComponent["components/kind-cluster"] --> Kind
   BackstageComponent["components/backstage"] --> Namespace
   BackstageComponent --> Backstage
-  DashboardComponent["components/kubernetes-dashboard"] --> Namespace
-  DashboardComponent --> Dashboard
+  HeadlampComponent["components/headlamp"] --> Namespace
+  HeadlampComponent --> Headlamp
 ```
 
 ```mermaid
@@ -77,7 +77,7 @@ flowchart LR
   Registry["Docker Registry"] --> BackstageApp["Backstage"]
   PostgresDb["PostgreSQL"] --> BackstageApp
   KindCluster["kind Cluster"] --> BackstageApp
-  KindCluster --> DashboardUi["Kubernetes Dashboard"]
+  KindCluster --> HeadlampUi["Headlamp"]
 ```
 
 ## Prerequisites
@@ -139,7 +139,7 @@ Use the component roots when you want independent deployment lifecycles:
 - `components/postgres` for PostgreSQL
 - `components/kind-cluster` for the remote `kind` cluster and kubeconfig
 - `components/backstage` for Backstage on an existing cluster
-- `components/kubernetes-dashboard` for Dashboard on an existing cluster
+- `components/headlamp` for Headlamp on an existing cluster
 
 Each component root has its own `terraform.tfvars.example`.
 
@@ -224,7 +224,7 @@ terraform plan
 terraform apply
 ```
 
-This root creates the remote `kind` cluster and writes a kubeconfig file locally. If you want public Backstage or Dashboard access later, reserve the needed host-port mappings here with `backstage_port_mapping` and `dashboard_port_mapping`.
+This root creates the remote `kind` cluster and writes a kubeconfig file locally. If you want public Backstage or Headlamp access later, reserve the needed host-port mappings here with `backstage_port_mapping` and `headlamp_port_mapping`.
 
 ### Backstage
 
@@ -240,22 +240,35 @@ This root expects an existing cluster and an existing PostgreSQL instance. For t
 
 If `backstage.expose_public = true`, the cluster must already have the matching host-port mapping reserved by `components/kind-cluster` or `components/all`. Otherwise use `ClusterIP` plus `kubectl port-forward`.
 
-### Kubernetes Dashboard
+### Headlamp
 
 ```bash
-cd components/kubernetes-dashboard
+cd components/headlamp
 cp terraform.tfvars.example terraform.tfvars
 terraform init
 terraform plan
 terraform apply
 ```
 
-If `dashboard.expose_public = true`, the cluster must already have the matching host-port mapping reserved by `components/kind-cluster` or `components/all`.
+If `headlamp.expose_public = true`, the cluster must already have the matching host-port mapping reserved by `components/kind-cluster` or `components/all`.
+Headlamp uses its in-cluster service account by default in this repo. The repo vendors the upstream `0.40.1` chart and patches out the broken `sessionTTL` flag that crashes the current `ghcr.io/headlamp-k8s/headlamp:v0.40.1` image.
 
-Generate a dashboard login token with:
+When `headlamp.expose_public = true`, access Headlamp at:
+
+```text
+http://<api_server_host>:8443
+```
+
+For the current example configuration that means:
+
+```text
+http://myserver:8443
+```
+
+Generate a service-account token for Headlamp with:
 
 ```bash
-kubectl --kubeconfig <path-to-kubeconfig> -n kubernetes-dashboard create token admin-user
+kubectl --kubeconfig <path-to-kubeconfig> create token headlamp -n headlamp
 ```
 
 ## Force Recreate
@@ -273,4 +286,4 @@ Leave it unchanged during normal applies.
 - Backstage is pinned to a chart version and image tag to avoid drift.
 - Backstage still uses the upstream demo image and generated self-signed TLS, which is suitable for bootstrap and evaluation rather than production.
 - The Backstage Helm release is post-rendered to force the Deployment strategy to `Recreate`, which avoids migration lock contention against the shared PostgreSQL database.
-- Kubernetes Dashboard admin user creation is convenient for dev environments but grants cluster-admin access.
+- Headlamp can be granted cluster-admin through its service account for dev environments. Tighten `headlamp.cluster_role_name` before using it beyond local or disposable clusters.

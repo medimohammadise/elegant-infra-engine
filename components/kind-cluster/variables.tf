@@ -29,12 +29,12 @@ variable "backstage_port_mapping" {
   default     = null
 }
 
-variable "dashboard_port_mapping" {
+variable "headlamp_port_mapping" {
   type = object({
     node_port = number
     host_port = number
   })
-  description = "Optional NodePort to host-port mapping reserved for Kubernetes Dashboard."
+  description = "Optional NodePort to host-port mapping reserved for Headlamp."
   default     = null
 }
 
