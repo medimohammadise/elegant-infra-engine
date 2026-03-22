@@ -13,6 +13,12 @@ locals {
   )
 
   keycloak_public_url = var.keycloak.enabled && var.keycloak.expose_public ? "http://${var.api_server_host}:${var.keycloak.host_port}/" : null
+  grafana_public_url  = var.observability.enabled && var.observability.expose_public ? "http://${var.api_server_host}:${var.observability.grafana_host_port}" : null
+  prometheus_public_url = (
+    var.observability.enabled && var.observability.expose_public && try(var.observability.prometheus.enabled, true)
+    ? "http://${var.api_server_host}:${var.observability.prometheus_host_port}"
+    : null
+  )
 }
 
 module "docker_network" {
@@ -80,7 +86,19 @@ module "kind_cluster" {
     host_port = var.headlamp.host_port
   } : null
   keycloak_port_mapping = local.keycloak_kind_port_mapping
-  recreate_revision     = trimspace(try(var.kubernetes.recreate_revision, "")) != "" ? var.kubernetes.recreate_revision : var.recreate_revision
+  grafana_port_mapping = var.observability.enabled && var.observability.expose_public ? {
+    node_port = var.observability.grafana_node_port
+    host_port = var.observability.grafana_host_port
+  } : null
+  prometheus_port_mapping = (
+    var.observability.enabled && var.observability.expose_public && try(var.observability.prometheus.enabled, true)
+    ? {
+      node_port = var.observability.prometheus_node_port
+      host_port = var.observability.prometheus_host_port
+    }
+    : null
+  )
+  recreate_revision = trimspace(try(var.kubernetes.recreate_revision, "")) != "" ? var.kubernetes.recreate_revision : var.recreate_revision
 
   depends_on = [module.postgres]
 }
@@ -186,4 +204,33 @@ module "keycloak" {
   recreate_revision = trimspace(try(var.keycloak.recreate_revision, "")) != "" ? var.keycloak.recreate_revision : var.recreate_revision
 
   depends_on = [module.keycloak_namespace]
+}
+
+module "observability_namespace" {
+  count  = var.observability.enabled ? 1 : 0
+  source = "../../modules/k8s-namespace"
+
+  name = var.observability.namespace
+
+  depends_on = [terraform_data.kind_cluster_ready]
+}
+
+module "observability" {
+  count  = var.observability.enabled ? 1 : 0
+  source = "../../modules/observability"
+
+  namespace = module.observability_namespace[0].name
+  grafana = merge(var.observability.grafana, {
+    service_type = var.observability.expose_public ? "NodePort" : "ClusterIP"
+    node_port    = var.observability.expose_public ? var.observability.grafana_node_port : null
+  })
+  loki  = var.observability.loki
+  tempo = var.observability.tempo
+  prometheus = merge(var.observability.prometheus, {
+    service_type = var.observability.expose_public ? "NodePort" : "ClusterIP"
+    node_port    = var.observability.expose_public ? var.observability.prometheus_node_port : null
+  })
+  recreate_revision = var.recreate_revision
+
+  depends_on = [module.observability_namespace]
 }

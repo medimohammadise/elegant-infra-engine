@@ -1,6 +1,6 @@
 # elegant-infra-engine
 
-This repository provisions a remote Docker registry, PostgreSQL, a `kind` Kubernetes cluster, Backstage, Headlamp, and Keycloak with Terraform. The layout is now split into reusable modules and deployable component roots so you can apply the full platform or only the parts you need.
+This repository provisions a remote Docker registry, PostgreSQL, a `kind` Kubernetes cluster, Backstage, Headlamp, Keycloak, and an observability stack (Grafana, Loki, Tempo, and Prometheus) with Terraform. The layout is now split into reusable modules and deployable component roots so you can apply the full platform or only the parts you need.
 
 For a consolidated list of exposed endpoints, see [docs/exposed-urls.md](/Users/mehdi/MyProject/elegant-infra-engine/docs/exposed-urls.md).
 
@@ -15,6 +15,7 @@ components/
   backstage/            Deploy Backstage into an existing cluster
   headlamp/             Deploy Headlamp into an existing cluster
   keycloak/             Deploy Keycloak into an existing cluster
+  observability/        Deploy Grafana, Loki, Tempo, and Prometheus into an existing cluster
 modules/
   Reusable Terraform modules shared by the component roots
 scripts/
@@ -36,6 +37,7 @@ flowchart TD
   Components --> BackstageComponent["backstage/"]
   Components --> HeadlampComponent["headlamp/"]
   Components --> KeycloakComponent["keycloak/"]
+  Components --> ObservabilityComponent["observability/"]
 
   Modules --> DockerNetwork["docker-network/"]
   Modules --> RegistryModule["docker-registry/"]
@@ -46,6 +48,7 @@ flowchart TD
   Modules --> BackstageModule["backstage/"]
   Modules --> HeadlampModule["headlamp/"]
   Modules --> KeycloakModule["keycloak/"]
+  Modules --> ObservabilityModule["observability/"]
 
   Scripts --> BackstageScript["backstage-postrender.sh"]
 ```
@@ -62,6 +65,7 @@ flowchart TD
   All --> Namespace["modules/k8s-namespace"]
   All --> Backstage["modules/backstage"]
   All --> Headlamp["modules/headlamp"]
+  All --> ObservabilityModule["modules/observability"]
 
   RegistryComponent["components/docker-registry"] --> DockerNetwork
   RegistryComponent --> Registry
@@ -77,6 +81,8 @@ flowchart TD
   HeadlampComponent --> Headlamp
   KeycloakComponent["components/keycloak"] --> Namespace
   KeycloakComponent --> KeycloakModule["modules/keycloak"]
+  ObservabilityComponent["components/observability"] --> Namespace
+  ObservabilityComponent --> ObservabilityModule["modules/observability"]
 ```
 
 ```mermaid
@@ -87,6 +93,11 @@ flowchart LR
   KindCluster["kind Cluster"] --> BackstageApp
   KindCluster --> HeadlampUi["Headlamp"]
   KindCluster --> KeycloakApp
+  KindCluster --> Collector["Grafana Alloy / OpenTelemetry Collector"]
+  Collector --> GrafanaApp["Grafana\nDashboards and trace UI"]
+  Collector --> LokiApp["Loki\nLogs"]
+  Collector --> TempoApp["Tempo\nTraces"]
+  Collector --> PrometheusApp["Prometheus\nMetrics"]
 ```
 
 ## Prerequisites
@@ -150,6 +161,7 @@ Use the component roots when you want independent deployment lifecycles:
 - `components/backstage` for Backstage on an existing cluster
 - `components/headlamp` for Headlamp on an existing cluster
 - `components/keycloak` for Keycloak on an existing cluster
+- `components/observability` for Grafana, Loki, Tempo, and Prometheus on an existing cluster
 
 Each component root has its own `terraform.tfvars.example`.
 
@@ -300,6 +312,40 @@ When `keycloak.expose_public = true`, access Keycloak at:
 
 ```text
 http://<api_server_host>:8080/
+```
+
+### Observability
+
+```bash
+cd components/observability
+cp terraform.tfvars.example terraform.tfvars
+terraform init
+terraform plan
+terraform apply
+```
+
+This root expects an existing cluster and installs Grafana, Loki, Tempo, and Prometheus in one namespace.
+
+The observability stack is intended to cover these roles:
+
+- Grafana for dashboards and trace UI
+- Loki for logs
+- Prometheus for metrics
+- Tempo for traces
+- Grafana Alloy or OpenTelemetry Collector as the collector and agent layer that ships telemetry into the backends
+
+If `observability.expose_public = true`, the cluster must already have a matching host-port mapping reserved by your kind cluster configuration. Otherwise use `kubectl port-forward`.
+
+When `observability.expose_public = true`, access Grafana at:
+
+```text
+http://<api_server_host>:3000
+```
+
+When `observability.expose_public = true` and Prometheus is enabled, access Prometheus at:
+
+```text
+http://<api_server_host>:9090
 ```
 
 ## Force Recreate

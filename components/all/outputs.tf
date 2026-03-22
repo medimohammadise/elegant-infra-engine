@@ -47,6 +47,16 @@ output "keycloak_url" {
   value       = var.keycloak.enabled && var.keycloak.expose_public ? local.keycloak_public_url : var.keycloak_url
 }
 
+output "grafana_url" {
+  description = "Configured Grafana URL when publicly exposed."
+  value       = local.grafana_public_url
+}
+
+output "prometheus_url" {
+  description = "Configured Prometheus URL when publicly exposed."
+  value       = local.prometheus_public_url
+}
+
 output "exposed_urls" {
   description = "Consolidated platform endpoints, including optional external dependencies."
   value = {
@@ -57,8 +67,10 @@ output "exposed_urls" {
       ? "http://${var.registry.ui_bind}:${var.registry.ui_port}"
       : "http://${var.api_server_host}:${var.registry.ui_port}"
     )
-    backstage = var.backstage.enabled ? local.backstage_base_url : null
-    headlamp  = var.headlamp.enabled && var.headlamp.expose_public ? "http://${var.api_server_host}:${var.headlamp.host_port}" : null
-    keycloak  = var.keycloak.enabled && var.keycloak.expose_public ? local.keycloak_public_url : var.keycloak_url
+    backstage  = var.backstage.enabled ? local.backstage_base_url : null
+    headlamp   = var.headlamp.enabled && var.headlamp.expose_public ? "http://${var.api_server_host}:${var.headlamp.host_port}" : null
+    keycloak   = var.keycloak.enabled && var.keycloak.expose_public ? local.keycloak_public_url : var.keycloak_url
+    grafana    = local.grafana_public_url
+    prometheus = local.prometheus_public_url
   }
 }

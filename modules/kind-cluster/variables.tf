@@ -58,6 +58,24 @@ variable "keycloak_port_mapping" {
   default     = null
 }
 
+variable "grafana_port_mapping" {
+  type = object({
+    node_port = number
+    host_port = number
+  })
+  description = "Optional NodePort to host-port mapping for Grafana."
+  default     = null
+}
+
+variable "prometheus_port_mapping" {
+  type = object({
+    node_port = number
+    host_port = number
+  })
+  description = "Optional NodePort to host-port mapping for Prometheus."
+  default     = null
+}
+
 variable "kubeconfig_path" {
   type        = string
   description = "Absolute or relative path for the generated kubeconfig file."

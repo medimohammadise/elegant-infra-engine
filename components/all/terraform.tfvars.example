@@ -61,4 +61,20 @@ headlamp = {
   cluster_role_name           = "cluster-admin"
 }
 
+observability = {
+  enabled              = true
+  namespace            = "observability"
+  expose_public        = true
+  grafana_node_port    = 32300
+  grafana_host_port    = 3000
+  prometheus_node_port = 32090
+  prometheus_host_port = 9090
+  loki = {
+    enabled = false
+  }
+  tempo = {
+    enabled = false
+  }
+}
+
 recreate_revision = ""
