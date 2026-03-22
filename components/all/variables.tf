@@ -37,13 +37,14 @@ variable "registry" {
 variable "postgres" {
   type = object({
     bind_address = optional(string, "0.0.0.0")
+    access_host  = optional(string)
     port         = optional(number, 5432)
     db_name      = optional(string, "blitzinfra")
     user         = optional(string, "blitzinfra")
     password     = string
     volume_name  = optional(string, "postgres_data")
   })
-  description = "PostgreSQL settings."
+  description = "PostgreSQL settings. access_host optionally overrides the database host used by in-cluster workloads."
   sensitive   = true
 }
 
@@ -102,8 +103,51 @@ variable "keycloak_port_mapping" {
     node_port = number
     host_port = number
   })
-  description = "Optional NodePort to host-port mapping reserved for Keycloak."
+  description = "Optional NodePort to host-port mapping reserved for Keycloak. When null, values come from keycloak when enabled and expose_public."
   default     = null
+}
+
+variable "keycloak" {
+  type = object({
+    enabled           = optional(bool, false)
+    name              = optional(string, "keycloak")
+    namespace         = optional(string, "keycloak")
+    image_repository  = optional(string, "quay.io/keycloak/keycloak")
+    image_tag         = optional(string, "26.5.6")
+    replicas          = optional(number, 1)
+    expose_public     = optional(bool, true)
+    node_port         = optional(number, 32080)
+    host_port         = optional(number, 8080)
+    admin_username    = optional(string, "admin")
+    admin_password    = optional(string, "change-me")
+    recreate_revision = optional(string, "")
+  })
+  description = "Keycloak deployment settings."
+  default     = {}
+}
+
+variable "ingress_nginx" {
+  type = object({
+    enabled            = optional(bool, false)
+    namespace          = optional(string, "ingress-nginx")
+    chart_version      = optional(string, "4.14.2")
+    ingress_class_name = optional(string, "nginx")
+    http_node_port     = optional(number, 32080)
+    https_node_port    = optional(number, 32443)
+    http_host_port     = optional(number, 80)
+    https_host_port    = optional(number, 443)
+  })
+  description = "Reserved for future ingress-nginx wiring from components/all."
+  default     = {}
+}
+
+variable "observability" {
+  type = object({
+    enabled   = optional(bool, false)
+    namespace = optional(string, "observability")
+  })
+  description = "Reserved for future observability stack wiring."
+  default     = {}
 }
 
 variable "keycloak_url" {

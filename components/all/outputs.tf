@@ -44,7 +44,7 @@ output "headlamp_url" {
 
 output "keycloak_url" {
   description = "Configured external Keycloak URL."
-  value       = var.keycloak_url
+  value       = var.keycloak.enabled && var.keycloak.expose_public ? local.keycloak_public_url : var.keycloak_url
 }
 
 output "exposed_urls" {
@@ -59,6 +59,6 @@ output "exposed_urls" {
     )
     backstage = var.backstage.enabled ? local.backstage_base_url : null
     headlamp  = var.headlamp.enabled && var.headlamp.expose_public ? "http://${var.api_server_host}:${var.headlamp.host_port}" : null
-    keycloak  = var.keycloak_url
+    keycloak  = var.keycloak.enabled && var.keycloak.expose_public ? local.keycloak_public_url : var.keycloak_url
   }
 }
