@@ -12,6 +12,8 @@ Use Terraform outputs as the source of truth for the live values. This file is t
 | Backstage | `https://<api_server_host>:7007/` | `components/backstage` or `components/all` | Requires the matching Backstage host-port mapping on the kind cluster. |
 | Headlamp | `http://<api_server_host>:8443/` | `components/headlamp` or `components/all` | Requires the matching Headlamp host-port mapping on the kind cluster. |
 | Keycloak | `http://<api_server_host>:8080/` | `components/keycloak` | Requires `keycloak.expose_public = true` and the matching Keycloak host-port mapping on the kind cluster. |
+| Grafana | `http://<api_server_host>:3000` | `components/observability` or `components/all` | Requires `observability.expose_public = true` and the matching Grafana host-port mapping on the kind cluster. |
+| Prometheus | `http://<api_server_host>:9090` | `components/observability` or `components/all` | Requires `observability.expose_public = true`, `observability.prometheus.enabled = true`, and the matching Prometheus host-port mapping on the kind cluster. |
 
 For the current example configuration this means:
 
@@ -20,6 +22,8 @@ For the current example configuration this means:
 | Backstage | `https://myserver:7007/` |
 | Headlamp | `http://myserver:8443/` |
 | Keycloak | `http://myserver:8080/` |
+| Grafana | `http://myserver:3000` |
+| Prometheus | `http://myserver:9090` |
 
 ## Commands
 
@@ -27,6 +31,7 @@ For the current example configuration this means:
 terraform -chdir=components/all output exposed_urls
 terraform -chdir=components/backstage output exposed_urls
 terraform -chdir=components/keycloak output exposed_urls
+terraform -chdir=components/observability output exposed_urls
 ```
 
 ## Keycloak Without Port Forwarding
