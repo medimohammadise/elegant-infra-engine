@@ -278,7 +278,8 @@ http://myserver:8443
 Generate a service-account token for Headlamp with:
 
 ```bash
-kubectl --kubeconfig <path-to-kubeconfig> create token headlamp -n headlamp
+KUBECONFIG=/Users/mehdi/MyProject/elegant-infra-engine/components/all/blitzinfra-kubeconfig \
+kubectl -n headlamp create token headlamp
 ```
 
 ### Keycloak
