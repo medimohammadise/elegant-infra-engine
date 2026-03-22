@@ -65,6 +65,7 @@ flowchart TD
   All --> Namespace["modules/k8s-namespace"]
   All --> Backstage["modules/backstage"]
   All --> Headlamp["modules/headlamp"]
+  All --> ObservabilityModule["modules/observability"]
 
   RegistryComponent["components/docker-registry"] --> DockerNetwork
   RegistryComponent --> Registry
@@ -92,10 +93,11 @@ flowchart LR
   KindCluster["kind Cluster"] --> BackstageApp
   KindCluster --> HeadlampUi["Headlamp"]
   KindCluster --> KeycloakApp
-  KindCluster --> GrafanaApp["Grafana"]
-  KindCluster --> LokiApp["Loki"]
-  KindCluster --> TempoApp["Tempo"]
-  KindCluster --> PrometheusApp["Prometheus"]
+  KindCluster --> Collector["Grafana Alloy / OpenTelemetry Collector"]
+  Collector --> GrafanaApp["Grafana\nDashboards and trace UI"]
+  Collector --> LokiApp["Loki\nLogs"]
+  Collector --> TempoApp["Tempo\nTraces"]
+  Collector --> PrometheusApp["Prometheus\nMetrics"]
 ```
 
 ## Prerequisites
@@ -323,6 +325,14 @@ terraform apply
 ```
 
 This root expects an existing cluster and installs Grafana, Loki, Tempo, and Prometheus in one namespace.
+
+The observability stack is intended to cover these roles:
+
+- Grafana for dashboards and trace UI
+- Loki for logs
+- Prometheus for metrics
+- Tempo for traces
+- Grafana Alloy or OpenTelemetry Collector as the collector and agent layer that ships telemetry into the backends
 
 If `observability.expose_public = true`, the cluster must already have a matching host-port mapping reserved by your kind cluster configuration. Otherwise use `kubectl port-forward`.
 

@@ -8,7 +8,7 @@ These instructions apply to the entire repository unless a deeper `AGENTS.md` ov
 - Deployable Terraform roots live under `components/`.
 - Reusable Terraform modules live under `modules/`.
 - Shared helper scripts live under `scripts/`.
-- Current component roots include `all`, `docker-registry`, `postgres`, `kind-cluster`, `backstage`, and `headlamp`.
+- Current component roots include `all`, `docker-registry`, `postgres`, `kind-cluster`, `backstage`, `headlamp`, `keycloak`, and `observability`.
 
 ## Working Agreement
 - Keep changes focused on Terraform-based infrastructure automation, bootstrap flow, helper scripts, and related documentation.
@@ -21,6 +21,9 @@ These instructions apply to the entire repository unless a deeper `AGENTS.md` ov
 - Keep inputs explicit through `variables.tf`, surface useful values via `outputs.tf`, and keep provider setup scoped to the component roots.
 - Prefer composing behavior from `modules/` inside `components/` rather than adding one-off resources directly to multiple roots.
 - Preserve idempotency and support partial deployments where a component may be applied independently from `components/all`.
+- Keep `components/all` aligned with the standalone component roots when shared capabilities are exposed there, especially for Keycloak and observability.
+- For observability changes, preserve the separation between the deployable stack in `components/observability` and the reusable Helm logic in `modules/observability`.
+- When exposing Grafana or Prometheus publicly, make sure the matching `kind` host-port mappings stay wired through `modules/kind-cluster` and any corresponding `components/all` outputs remain in sync.
 
 ## Shell Script Conventions
 - Use `bash`-compatible syntax consistent with the existing scripts.
@@ -35,6 +38,8 @@ These instructions apply to the entire repository unless a deeper `AGENTS.md` ov
 - Avoid commands that mutate remote Docker, SSH, Terraform state, or Kubernetes resources unless the user explicitly asks for that execution.
 - If a command depends on local secrets, SSH access, remote Docker, or cluster access, note that limitation before running it.
 - Be careful with roots that create or modify the remote `kind` cluster; they may require `DOCKER_HOST` and `DOCKER_CONFIG` to be set as documented in `README.md`.
+- For `components/all` plans that touch the remote `kind` cluster, use the Docker environment expected by the repo so Terraform can talk to the remote daemon through the `kind` provider.
+- For observability changes in `components/all`, confirm the plan does not accidentally destroy the live `module.observability` resources when only documentation or variable wiring was intended to change.
 
 ## Safety
 - Treat `terraform.tfvars`, SSH targets, Docker contexts, kubeconfig paths, and Kubernetes contexts as user-specific configuration.
