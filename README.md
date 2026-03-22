@@ -246,7 +246,7 @@ terraform plan
 terraform apply
 ```
 
-This root expects an existing cluster and an existing PostgreSQL instance. For the current Docker-hosted PostgreSQL pattern, use `host.docker.internal` as the database host from inside the cluster.
+This root expects an existing cluster and an existing PostgreSQL instance. For the current Docker-hosted PostgreSQL pattern, set `postgres.access_host` to an address the kind nodes can reach on the Docker host, such as the node gateway `172.19.0.1` in this environment.
 
 If `backstage.expose_public = true`, the cluster must already have the matching host-port mapping reserved by `components/kind-cluster` or `components/all`. Otherwise use `ClusterIP` plus `kubectl port-forward`.
 
@@ -291,7 +291,7 @@ terraform plan
 terraform apply
 ```
 
-This root expects an existing cluster and an existing PostgreSQL instance. For the current Docker-hosted PostgreSQL pattern, use `host.docker.internal` as the database host from inside the cluster.
+This root expects an existing cluster and an existing PostgreSQL instance. For the current Docker-hosted PostgreSQL pattern, set `postgres.access_host` to an address the kind nodes can reach on the Docker host, such as the node gateway `172.19.0.1` in this environment.
 
 If `keycloak.expose_public = true`, the cluster must already have the matching host-port mapping reserved by `components/kind-cluster`. Otherwise use `kubectl port-forward`.
 

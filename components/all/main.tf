@@ -3,6 +3,16 @@ locals {
   backstage_base_url    = try(trimspace(var.backstage.base_url), "") != "" ? var.backstage.base_url : "https://${var.api_server_host}:${var.backstage.host_port}"
   kind_cluster_name     = try(var.kubernetes.cluster_name, "blitzinfra")
   kind_cluster_endpoint = "https://${var.api_server_host}:${var.kubernetes.api_server_port}"
+  postgres_access_host  = try(trimspace(var.postgres.access_host), "") != "" ? var.postgres.access_host : module.postgres.backstage_host
+
+  keycloak_kind_port_mapping = var.keycloak_port_mapping != null ? var.keycloak_port_mapping : (
+    var.keycloak.enabled && var.keycloak.expose_public ? {
+      node_port = var.keycloak.node_port
+      host_port = var.keycloak.host_port
+    } : null
+  )
+
+  keycloak_public_url = var.keycloak.enabled && var.keycloak.expose_public ? "http://${var.api_server_host}:${var.keycloak.host_port}/" : null
 }
 
 module "docker_network" {
@@ -69,7 +79,7 @@ module "kind_cluster" {
     node_port = var.headlamp.node_port
     host_port = var.headlamp.host_port
   } : null
-  keycloak_port_mapping = var.keycloak_port_mapping
+  keycloak_port_mapping = local.keycloak_kind_port_mapping
   recreate_revision     = trimspace(try(var.kubernetes.recreate_revision, "")) != "" ? var.kubernetes.recreate_revision : var.recreate_revision
 
   depends_on = [module.postgres]
@@ -109,7 +119,7 @@ module "backstage" {
   base_url          = local.backstage_base_url
   service_type      = var.backstage.expose_public ? "NodePort" : "ClusterIP"
   node_port         = var.backstage.expose_public ? var.backstage.node_port : null
-  postgres_host     = module.postgres.backstage_host
+  postgres_host     = local.postgres_access_host
   postgres_port     = module.postgres.port
   postgres_db_name  = module.postgres.db_name
   postgres_user     = module.postgres.user
@@ -145,4 +155,35 @@ module "headlamp" {
   recreate_revision           = trimspace(try(var.headlamp.recreate_revision, "")) != "" ? var.headlamp.recreate_revision : var.recreate_revision
 
   depends_on = [module.headlamp_namespace]
+}
+
+module "keycloak_namespace" {
+  count  = var.keycloak.enabled ? 1 : 0
+  source = "../../modules/k8s-namespace"
+
+  name = var.keycloak.namespace
+
+  depends_on = [terraform_data.kind_cluster_ready]
+}
+
+module "keycloak" {
+  count  = var.keycloak.enabled ? 1 : 0
+  source = "../../modules/keycloak"
+
+  name              = var.keycloak.name
+  namespace         = module.keycloak_namespace[0].name
+  image             = "${var.keycloak.image_repository}:${var.keycloak.image_tag}"
+  replicas          = var.keycloak.replicas
+  service_type      = var.keycloak.expose_public ? "NodePort" : "ClusterIP"
+  node_port         = var.keycloak.expose_public ? var.keycloak.node_port : null
+  admin_username    = var.keycloak.admin_username
+  admin_password    = var.keycloak.admin_password
+  database_host     = local.postgres_access_host
+  database_port     = module.postgres.port
+  database_name     = module.postgres.db_name
+  database_user     = module.postgres.user
+  database_password = var.postgres.password
+  recreate_revision = trimspace(try(var.keycloak.recreate_revision, "")) != "" ? var.keycloak.recreate_revision : var.recreate_revision
+
+  depends_on = [module.keycloak_namespace]
 }
