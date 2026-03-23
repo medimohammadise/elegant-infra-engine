@@ -21,6 +21,12 @@ variable "image_tag" {
   default     = "1.30.2"
 }
 
+variable "image_repository" {
+  type        = string
+  description = "Backstage application image repository."
+  default     = "ghcr.io/backstage/backstage"
+}
+
 variable "base_url" {
   type        = string
   description = "Base URL used by the Backstage app and backend."
@@ -79,6 +85,66 @@ variable "postgres_password" {
   type        = string
   description = "Database password used by Backstage."
   sensitive   = true
+}
+
+variable "backend_auth_key" {
+  type        = string
+  description = "Static backend auth key used for plugin-to-plugin and external token validation in protected mode."
+  sensitive   = true
+}
+
+variable "auth_provider" {
+  type        = string
+  description = "Backstage sign-in provider mode."
+  default     = "keycloak_proxy"
+
+  validation {
+    condition     = contains(["none", "keycloak_proxy"], var.auth_provider)
+    error_message = "auth_provider must be none or keycloak_proxy."
+  }
+}
+
+variable "keycloak_base_url" {
+  type        = string
+  description = "Keycloak base URL, for example http://myserver:8080."
+  default     = null
+  nullable    = true
+}
+
+variable "keycloak_realm" {
+  type        = string
+  description = "Keycloak realm used by Backstage."
+  default     = null
+  nullable    = true
+}
+
+variable "keycloak_client_id" {
+  type        = string
+  description = "Keycloak client ID used by Backstage."
+  default     = null
+  nullable    = true
+}
+
+variable "keycloak_client_secret" {
+  type        = string
+  description = "Keycloak client secret used by the auth proxy."
+  default     = null
+  nullable    = true
+  sensitive   = true
+}
+
+variable "oauth2_proxy_cookie_secret" {
+  type        = string
+  description = "Cookie secret used by oauth2-proxy in keycloak_proxy mode."
+  default     = null
+  nullable    = true
+  sensitive   = true
+}
+
+variable "public_node_port" {
+  type        = number
+  description = "Public NodePort exposed by oauth2-proxy in keycloak_proxy mode."
+  default     = null
 }
 
 variable "recreate_revision" {

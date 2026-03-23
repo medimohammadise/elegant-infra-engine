@@ -248,6 +248,13 @@ ssh_context_host     = "myserver"
 ssh_private_key_path = "~/.ssh/id_rsa"
 api_server_host      = "myserver"
 bootstrap_namespace  = "blitzpay-dev"
+backstage_backend_auth_key = "replace-with-long-random-secret"
+backstage_auth_provider = "keycloak_proxy"
+backstage_keycloak_base_url = "http://myserver:8080"
+backstage_keycloak_realm = "backstage"
+backstage_keycloak_client_id = "backstage"
+backstage_keycloak_client_secret = "replace-with-client-secret"
+backstage_oauth2_proxy_cookie_secret = "replace-with-base64-cookie-secret"
 
 registry = {
   network_name   = "registry_net"
@@ -362,6 +369,9 @@ terraform apply
 This root expects an existing cluster and an existing PostgreSQL instance. For the current Docker-hosted PostgreSQL pattern, set `postgres.access_host` to an address the kind nodes can reach on the Docker host, such as the node gateway `172.19.0.1` in this environment.
 
 If `backstage.expose_public = true`, the cluster must already have the matching host-port mapping reserved by `components/kind-cluster` or `components/all`. Otherwise use `ClusterIP` plus `kubectl port-forward`.
+
+Backstage authentication is OAuth-only in this repo. Set `backstage_auth_provider = "keycloak_proxy"` and provide `backstage_keycloak_base_url`, `backstage_keycloak_realm`, `backstage_keycloak_client_id`, `backstage_keycloak_client_secret`, and `backstage_oauth2_proxy_cookie_secret` in `terraform.tfvars`. Guest auth mode is not supported.
+The Backstage `base_url` must use `https://`.
 
 ### Headlamp
 
