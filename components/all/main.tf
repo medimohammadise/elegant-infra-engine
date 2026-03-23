@@ -12,6 +12,11 @@ locals {
     } : null
   )
 
+  kafka_dashboard_public_url = (
+    var.kafka.enabled && var.kafka.expose_dashboard_public
+    ? "http://${var.api_server_host}:${var.kafka.dashboard_host_port}"
+    : null
+  )
   keycloak_public_url = var.keycloak.enabled && var.keycloak.expose_public ? "http://${var.api_server_host}:${var.keycloak.host_port}/" : null
   grafana_public_url  = var.observability.enabled && var.observability.expose_public ? "http://${var.api_server_host}:${var.observability.grafana_host_port}" : null
   prometheus_public_url = (
@@ -173,6 +178,70 @@ module "headlamp" {
   recreate_revision           = trimspace(try(var.headlamp.recreate_revision, "")) != "" ? var.headlamp.recreate_revision : var.recreate_revision
 
   depends_on = [module.headlamp_namespace]
+}
+
+module "kafka_namespace" {
+  count  = var.kafka.enabled ? 1 : 0
+  source = "../../modules/k8s-namespace"
+
+  name = var.kafka.namespace
+
+  depends_on = [terraform_data.kind_cluster_ready]
+}
+
+resource "terraform_data" "kafka_public_access" {
+  input = {
+    kafka     = var.kafka.expose_public
+    dashboard = var.kafka.expose_dashboard_public
+  }
+
+  lifecycle {
+    precondition {
+      condition     = (!var.kafka.expose_public && !var.kafka.expose_dashboard_public) || trimspace(var.api_server_host) != ""
+      error_message = "Set api_server_host when kafka.expose_public or kafka.expose_dashboard_public is true so public Kafka endpoints can be surfaced."
+    }
+  }
+}
+
+module "kafka" {
+  count  = var.kafka.enabled ? 1 : 0
+  source = "../../modules/kafka"
+
+  namespace         = module.kafka_namespace[0].name
+  api_server_host   = var.api_server_host
+  kafka             = var.kafka
+  recreate_revision = trimspace(try(var.kafka.recreate_revision, "")) != "" ? var.kafka.recreate_revision : var.recreate_revision
+
+  depends_on = [
+    module.kafka_namespace,
+    terraform_data.kafka_public_access,
+  ]
+}
+
+module "kafka_proxy" {
+  count  = var.kafka.enabled && var.kafka.expose_public ? 1 : 0
+  source = "../../modules/kafka-ui-proxy"
+
+  target_host       = "${local.kind_cluster_name}-control-plane"
+  target_port       = var.kafka.external_node_port
+  external_port     = var.kafka.external_host_port
+  container_name    = "${local.kind_cluster_name}-kafka-proxy"
+  recreate_revision = trimspace(try(var.kafka.recreate_revision, "")) != "" ? var.kafka.recreate_revision : var.recreate_revision
+
+  depends_on = [module.kafka]
+}
+
+module "kafka_ui_proxy" {
+  count  = var.kafka.enabled && var.kafka.expose_dashboard_public ? 1 : 0
+  source = "../../modules/kafka-ui-proxy"
+
+  target_host       = "${local.kind_cluster_name}-control-plane"
+  target_port       = var.kafka.dashboard_node_port
+  external_port     = var.kafka.dashboard_host_port
+  container_name    = "${local.kind_cluster_name}-kafka-ui-proxy"
+  recreate_revision = trimspace(try(var.kafka.recreate_revision, "")) != "" ? var.kafka.recreate_revision : var.recreate_revision
+
+  depends_on = [module.kafka]
 }
 
 module "keycloak_namespace" {

@@ -1,5 +1,8 @@
 .DS_Store
 .env
+.idea/
+*.tmp
+*.swp
 
 # Terraform
 **/.terraform/*
@@ -8,3 +11,4 @@
 *.tfvars
 *-kubeconfig
 *-config
+.terraform.lock.hcl

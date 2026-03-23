@@ -18,6 +18,11 @@ headlamp_port_mapping = {
   host_port = 8443
 }
 
+kafka_dashboard_port_mapping = {
+  node_port = 32081
+  host_port = 8088
+}
+
 keycloak_port_mapping = {
   node_port = 32080
   host_port = 8080
