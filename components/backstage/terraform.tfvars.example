@@ -1,6 +1,7 @@
 kubeconfig_path = "./blitzinfra-kubeconfig"
 cluster_name    = "blitzinfra"
 keycloak_url    = "https://sso.example.com"
+backstage_backend_auth_key = "replace-with-long-random-secret"
 
 backstage = {
   namespace     = "backstage"

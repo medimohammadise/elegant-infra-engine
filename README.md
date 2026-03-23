@@ -248,6 +248,7 @@ ssh_context_host     = "myserver"
 ssh_private_key_path = "~/.ssh/id_rsa"
 api_server_host      = "myserver"
 bootstrap_namespace  = "blitzpay-dev"
+backstage_backend_auth_key = "replace-with-long-random-secret"
 
 registry = {
   network_name   = "registry_net"
@@ -362,6 +363,8 @@ terraform apply
 This root expects an existing cluster and an existing PostgreSQL instance. For the current Docker-hosted PostgreSQL pattern, set `postgres.access_host` to an address the kind nodes can reach on the Docker host, such as the node gateway `172.19.0.1` in this environment.
 
 If `backstage.expose_public = true`, the cluster must already have the matching host-port mapping reserved by `components/kind-cluster` or `components/all`. Otherwise use `ClusterIP` plus `kubectl port-forward`.
+
+Protected mode requires `backstage_backend_auth_key` to be set in `terraform.tfvars`. Use a long random secret and keep it private.
 
 ### Headlamp
 

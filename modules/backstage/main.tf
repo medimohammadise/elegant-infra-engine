@@ -11,6 +11,49 @@ resource "terraform_data" "recreate" {
   input = var.recreate_revision
 }
 
+locals {
+  auth_providers = merge(
+    {},
+    var.auth_provider == "keycloak" ? {
+      keycloak = {
+        development = {
+          metadataUrl  = "${trim(var.keycloak_base_url, "/")}/realms/${var.keycloak_realm}/.well-known/openid-configuration"
+          clientId     = var.keycloak_client_id
+          clientSecret = var.keycloak_client_secret
+          signIn = {
+            resolvers = [
+              {
+                resolver = "dangerouslyAllowSignInWithoutUserInCatalog"
+              }
+            ]
+          }
+        }
+      }
+    } : {},
+    var.auth_provider == "guest" ? {
+      guest = {
+        dangerouslyAllowOutsideDevelopment = true
+      }
+    } : {},
+  )
+
+  backend_auth = merge(
+    {},
+    var.auth_provider == "none" ? {
+      dangerouslyDisableDefaultAuthPolicy = true
+    } : {},
+    var.auth_provider != "none" ? {
+      keys = [
+        {
+          secret = var.backend_auth_key
+        }
+      ]
+    } : {},
+  )
+
+  permission_enabled = var.auth_provider != "none"
+}
+
 resource "helm_release" "this" {
   name             = var.release_name
   repository       = "https://backstage.github.io/charts"
@@ -88,15 +131,12 @@ resource "helm_release" "this" {
               "http://localhost:7007",
               var.base_url
             ]
-            providers = {
-              guest = {
-                dangerouslyAllowOutsideDevelopment = true
-              }
-            }
+            providers = local.auth_providers
           }
           backend = {
             baseUrl = var.base_url
             https   = true
+            auth    = local.backend_auth
             cors = {
               origin = [
                 "https://localhost:7007",
@@ -175,7 +215,7 @@ resource "helm_release" "this" {
             ]
           }
           permission = {
-            enabled = true
+            enabled = local.permission_enabled
           }
         }
       }

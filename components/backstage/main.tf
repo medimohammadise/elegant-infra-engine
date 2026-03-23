@@ -11,6 +11,7 @@ module "backstage" {
   chart_version     = var.backstage.chart_version
   image_tag         = var.backstage.image_tag
   base_url          = var.backstage.base_url
+  backend_auth_key  = var.backstage_backend_auth_key
   service_type      = var.backstage.expose_public ? "NodePort" : "ClusterIP"
   node_port         = var.backstage.expose_public ? var.backstage.node_port : null
   postgres_host     = var.postgres.host

@@ -9,6 +9,12 @@ variable "cluster_name" {
   default     = "blitzinfra"
 }
 
+variable "backstage_backend_auth_key" {
+  type        = string
+  description = "Static Backstage backend auth key used in protected mode."
+  sensitive   = true
+}
+
 variable "backstage" {
   type = object({
     namespace     = optional(string, "backstage")

@@ -14,6 +14,52 @@ variable "api_server_host" {
   description = "Host name or IP exposed by the kind API server and public services."
 }
 
+variable "backstage_backend_auth_key" {
+  type        = string
+  description = "Static Backstage backend auth key used in protected mode."
+  sensitive   = true
+}
+
+variable "backstage_auth_provider" {
+  type        = string
+  description = "Backstage sign-in provider mode."
+  default     = "guest"
+
+  validation {
+    condition     = contains(["none", "guest", "keycloak"], var.backstage_auth_provider)
+    error_message = "backstage_auth_provider must be none, guest, or keycloak."
+  }
+}
+
+variable "backstage_keycloak_base_url" {
+  type        = string
+  description = "Keycloak base URL used by Backstage when backstage_auth_provider is keycloak."
+  default     = null
+  nullable    = true
+}
+
+variable "backstage_keycloak_realm" {
+  type        = string
+  description = "Keycloak realm used by Backstage when backstage_auth_provider is keycloak."
+  default     = null
+  nullable    = true
+}
+
+variable "backstage_keycloak_client_id" {
+  type        = string
+  description = "Keycloak client ID used by Backstage when backstage_auth_provider is keycloak."
+  default     = null
+  nullable    = true
+}
+
+variable "backstage_keycloak_client_secret" {
+  type        = string
+  description = "Keycloak client secret used by Backstage when backstage_auth_provider is keycloak."
+  default     = null
+  nullable    = true
+  sensitive   = true
+}
+
 variable "bootstrap_namespace" {
   type        = string
   description = "Optional application namespace created alongside the platform."

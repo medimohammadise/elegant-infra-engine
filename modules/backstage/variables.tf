@@ -81,6 +81,52 @@ variable "postgres_password" {
   sensitive   = true
 }
 
+variable "backend_auth_key" {
+  type        = string
+  description = "Static backend auth key used for plugin-to-plugin and external token validation in protected mode."
+  sensitive   = true
+}
+
+variable "auth_provider" {
+  type        = string
+  description = "Backstage sign-in provider mode."
+  default     = "guest"
+
+  validation {
+    condition     = contains(["none", "guest", "keycloak"], var.auth_provider)
+    error_message = "auth_provider must be none, guest, or keycloak."
+  }
+}
+
+variable "keycloak_base_url" {
+  type        = string
+  description = "Keycloak base URL, for example http://myserver:8080."
+  default     = null
+  nullable    = true
+}
+
+variable "keycloak_realm" {
+  type        = string
+  description = "Keycloak realm used by Backstage."
+  default     = null
+  nullable    = true
+}
+
+variable "keycloak_client_id" {
+  type        = string
+  description = "Keycloak client ID used by Backstage."
+  default     = null
+  nullable    = true
+}
+
+variable "keycloak_client_secret" {
+  type        = string
+  description = "Keycloak client secret used by Backstage."
+  default     = null
+  nullable    = true
+  sensitive   = true
+}
+
 variable "recreate_revision" {
   type        = string
   description = "Change this token to force replacement of the Backstage release."
