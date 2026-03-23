@@ -15,6 +15,7 @@ These instructions apply to the entire repository unless a deeper `AGENTS.md` ov
 - Prefer small, surgical edits that preserve the existing Terraform and shell style used in the repo.
 - Preserve the split between reusable modules and deployable component roots; avoid duplicating module logic across `components/`.
 - When changing behavior, update `README.md` if architecture, prerequisites, variables, or operator workflow changes.
+- Follow the contributor and commit conventions in `CONTRIBUTING.md` when preparing commits, PR-ready history, or contributor-facing guidance.
 
 ## Terraform Conventions
 - Follow the existing component and module patterns instead of introducing new layout conventions.
@@ -45,3 +46,10 @@ These instructions apply to the entire repository unless a deeper `AGENTS.md` ov
 - Treat `terraform.tfvars`, SSH targets, Docker contexts, kubeconfig paths, and Kubernetes contexts as user-specific configuration.
 - Never commit secrets, generated credentials, or machine-specific config changes unless the user explicitly requests it.
 - Do not hardcode hostnames, private key paths, database passwords, tokens, or host-port mappings outside the documented examples.
+
+## Active Technologies
+- Terraform HCL with Terraform CLI 1.x, Bash-compatible helper scripts + HashiCorp Terraform providers (`helm`, `kubernetes`, `local` where needed), `tehcyx/kind` provider for host-port mappings, Helm charts for Kafka and the Kafka dashboard (001-add-kafka-dashboard)
+- Kubernetes persistent volumes for Kafka data when persistence is enabled; Terraform state for infrastructure metadata (001-add-kafka-dashboard)
+
+## Recent Changes
+- 001-add-kafka-dashboard: Added Terraform HCL with Terraform CLI 1.x, Bash-compatible helper scripts + HashiCorp Terraform providers (`helm`, `kubernetes`, `local` where needed), `tehcyx/kind` provider for host-port mappings, Helm charts for Kafka and the Kafka dashboard
