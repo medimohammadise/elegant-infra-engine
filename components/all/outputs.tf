@@ -42,6 +42,21 @@ output "headlamp_url" {
   value       = var.headlamp.enabled && var.headlamp.expose_public ? "http://${var.api_server_host}:${var.headlamp.host_port}" : null
 }
 
+output "kafka_bootstrap_servers" {
+  description = "In-cluster Kafka bootstrap servers."
+  value       = var.kafka.enabled ? module.kafka[0].bootstrap_servers : null
+}
+
+output "kafka_public_bootstrap_servers" {
+  description = "Externally reachable Kafka bootstrap servers when public access is enabled."
+  value       = var.kafka.enabled ? module.kafka[0].public_bootstrap_servers : null
+}
+
+output "kafka_dashboard_url" {
+  description = "Configured Kafka dashboard URL when publicly exposed."
+  value       = local.kafka_dashboard_public_url
+}
+
 output "keycloak_url" {
   description = "Configured external Keycloak URL."
   value       = var.keycloak.enabled && var.keycloak.expose_public ? local.keycloak_public_url : var.keycloak_url
@@ -67,10 +82,12 @@ output "exposed_urls" {
       ? "http://${var.registry.ui_bind}:${var.registry.ui_port}"
       : "http://${var.api_server_host}:${var.registry.ui_port}"
     )
-    backstage  = var.backstage.enabled ? local.backstage_base_url : null
-    headlamp   = var.headlamp.enabled && var.headlamp.expose_public ? "http://${var.api_server_host}:${var.headlamp.host_port}" : null
-    keycloak   = var.keycloak.enabled && var.keycloak.expose_public ? local.keycloak_public_url : var.keycloak_url
-    grafana    = local.grafana_public_url
-    prometheus = local.prometheus_public_url
+    backstage       = var.backstage.enabled ? local.backstage_base_url : null
+    headlamp        = var.headlamp.enabled && var.headlamp.expose_public ? "http://${var.api_server_host}:${var.headlamp.host_port}" : null
+    kafka           = var.kafka.enabled ? module.kafka[0].public_bootstrap_servers : null
+    kafka_dashboard = local.kafka_dashboard_public_url
+    keycloak        = var.keycloak.enabled && var.keycloak.expose_public ? local.keycloak_public_url : var.keycloak_url
+    grafana         = local.grafana_public_url
+    prometheus      = local.prometheus_public_url
   }
 }

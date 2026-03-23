@@ -49,6 +49,15 @@ variable "headlamp_port_mapping" {
   default     = null
 }
 
+variable "kafka_dashboard_port_mapping" {
+  type = object({
+    node_port = number
+    host_port = number
+  })
+  description = "Optional NodePort to host-port mapping for the Kafka dashboard."
+  default     = null
+}
+
 variable "keycloak_port_mapping" {
   type = object({
     node_port = number

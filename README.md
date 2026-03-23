@@ -1,8 +1,73 @@
 # elegant-infra-engine
 
-This repository provisions a remote Docker registry, PostgreSQL, a `kind` Kubernetes cluster, Backstage, Headlamp, Keycloak, and an observability stack (Grafana, Loki, Tempo, and Prometheus) with Terraform. The layout is now split into reusable modules and deployable component roots so you can apply the full platform or only the parts you need.
+This repository provisions a remote Docker registry, PostgreSQL, a `kind` Kubernetes cluster, Backstage, Headlamp, Kafka with an open-source Kafka UI dashboard, Keycloak, and an observability stack (Grafana, Loki, Tempo, and Prometheus) with Terraform. The layout is now split into reusable modules and deployable component roots so you can apply the full platform or only the parts you need.
 
-For a consolidated list of exposed endpoints, see [docs/exposed-urls.md](/Users/mehdi/MyProject/elegant-infra-engine/docs/exposed-urls.md).
+For contributor workflow and semantic commit guidance, see [CONTRIBUTING.md](/Users/mehdi/MyProject/elegant-infra-engine/CONTRIBUTING.md).
+
+## Exposed URLs
+
+Use Terraform outputs as the source of truth for the live values.
+
+| Service | Public URL | Root | Notes |
+| --- | --- | --- | --- |
+| Kubernetes API | `https://<api_server_host>:6443` | `components/kind-cluster` or `components/all` | Port follows `kubernetes.api_server_port`. |
+| Docker Registry | `http://<api_server_host>:5000` | `components/docker-registry` or `components/all` | Port follows `registry.port`. |
+| Registry UI | `http://<api_server_host>:8081` | `components/docker-registry` or `components/all` | If `registry.ui_bind` is `127.0.0.1` or `localhost`, use that bind address instead. |
+| Backstage | `https://<api_server_host>:7007/` | `components/backstage` or `components/all` | Requires the matching Backstage host-port mapping on the kind cluster. |
+| Headlamp | `http://<api_server_host>:8443/` | `components/headlamp` or `components/all` | Requires the matching Headlamp host-port mapping on the kind cluster. |
+| Kafka UI | `http://<api_server_host>:8088` | `components/kafka` or `components/all` | Requires `kafka.expose_dashboard_public = true` and the Docker-managed Kafka UI proxy on the remote host. |
+| Keycloak | `http://<api_server_host>:8080/` | `components/keycloak` | Requires `keycloak.expose_public = true` and the matching Keycloak host-port mapping on the kind cluster. |
+| Grafana | `http://<api_server_host>:3000` | `components/observability` or `components/all` | Requires `observability.expose_public = true` and the matching Grafana host-port mapping on the kind cluster. |
+| Prometheus | `http://<api_server_host>:9090` | `components/observability` or `components/all` | Requires `observability.expose_public = true`, `observability.prometheus.enabled = true`, and the matching Prometheus host-port mapping on the kind cluster. |
+
+For the current example configuration this means:
+
+| Service | Example URL |
+| --- | --- |
+| Backstage | `https://myserver:7007/` |
+| Headlamp | `http://myserver:8443/` |
+| Kafka UI | `http://myserver:8088` |
+| Keycloak | `http://myserver:8080/` |
+| Grafana | `http://myserver:3000` |
+| Prometheus | `http://myserver:9090` |
+
+```bash
+terraform -chdir=components/all output exposed_urls
+terraform -chdir=components/backstage output exposed_urls
+terraform -chdir=components/kafka output exposed_urls
+terraform -chdir=components/keycloak output exposed_urls
+terraform -chdir=components/observability output exposed_urls
+```
+
+### Keycloak Without Port Forwarding
+
+To reach Keycloak directly from outside the cluster:
+
+1. Reserve the host-port mapping when creating or recreating the kind cluster:
+
+```hcl
+keycloak_port_mapping = {
+  node_port = 32080
+  host_port = 8080
+}
+```
+
+2. Deploy Keycloak with public exposure enabled:
+
+```hcl
+keycloak = {
+  expose_public = true
+  node_port     = 32080
+  host_port     = 8080
+  # other fields omitted
+}
+```
+
+3. Read the live URL from Terraform:
+
+```bash
+terraform -chdir=components/keycloak output keycloak_url
+```
 
 ## Layout
 
@@ -14,6 +79,7 @@ components/
   kind-cluster/         Deploy the remote kind cluster
   backstage/            Deploy Backstage into an existing cluster
   headlamp/             Deploy Headlamp into an existing cluster
+  kafka/                Deploy Kafka and Kafka UI into an existing cluster
   keycloak/             Deploy Keycloak into an existing cluster
   observability/        Deploy Grafana, Loki, Tempo, and Prometheus into an existing cluster
 modules/
@@ -36,6 +102,7 @@ flowchart TD
   Components --> KindComponent["kind-cluster/"]
   Components --> BackstageComponent["backstage/"]
   Components --> HeadlampComponent["headlamp/"]
+  Components --> KafkaComponent["kafka/"]
   Components --> KeycloakComponent["keycloak/"]
   Components --> ObservabilityComponent["observability/"]
 
@@ -47,6 +114,7 @@ flowchart TD
   Modules --> NamespaceModule["k8s-namespace/"]
   Modules --> BackstageModule["backstage/"]
   Modules --> HeadlampModule["headlamp/"]
+  Modules --> KafkaModule["kafka/"]
   Modules --> KeycloakModule["keycloak/"]
   Modules --> ObservabilityModule["observability/"]
 
@@ -65,6 +133,7 @@ flowchart TD
   All --> Namespace["modules/k8s-namespace"]
   All --> Backstage["modules/backstage"]
   All --> Headlamp["modules/headlamp"]
+  All --> Kafka["modules/kafka"]
   All --> ObservabilityModule["modules/observability"]
 
   RegistryComponent["components/docker-registry"] --> DockerNetwork
@@ -79,6 +148,8 @@ flowchart TD
   BackstageComponent --> Backstage
   HeadlampComponent["components/headlamp"] --> Namespace
   HeadlampComponent --> Headlamp
+  KafkaComponent["components/kafka"] --> Namespace
+  KafkaComponent --> Kafka
   KeycloakComponent["components/keycloak"] --> Namespace
   KeycloakComponent --> KeycloakModule["modules/keycloak"]
   ObservabilityComponent["components/observability"] --> Namespace
@@ -92,7 +163,9 @@ flowchart LR
   PostgresDb --> KeycloakApp["Keycloak"]
   KindCluster["kind Cluster"] --> BackstageApp
   KindCluster --> HeadlampUi["Headlamp"]
+  KindCluster --> KafkaUi["Kafka UI"]
   KindCluster --> KeycloakApp
+  KindCluster --> KafkaApp["Kafka"]
   KindCluster --> Collector["Grafana Alloy / OpenTelemetry Collector"]
   Collector --> GrafanaApp["Grafana\nDashboards and trace UI"]
   Collector --> LokiApp["Loki\nLogs"]
@@ -160,6 +233,7 @@ Use the component roots when you want independent deployment lifecycles:
 - `components/kind-cluster` for the remote `kind` cluster and kubeconfig
 - `components/backstage` for Backstage on an existing cluster
 - `components/headlamp` for Headlamp on an existing cluster
+- `components/kafka` for Kafka and Kafka UI on an existing cluster
 - `components/keycloak` for Keycloak on an existing cluster
 - `components/observability` for Grafana, Loki, Tempo, and Prometheus on an existing cluster
 
@@ -204,6 +278,33 @@ backstage = {
   node_port     = 32007
   host_port     = 7007
 }
+
+kafka = {
+  enabled                  = true
+  namespace                = "kafka"
+  release_name             = "kafka"
+  chart_repository         = "oci://registry-1.docker.io/bitnamicharts"
+  chart_name               = "kafka"
+  chart_version            = "32.0.2"
+  controller_replica_count = 1
+  broker_replica_count     = 1
+  image_registry           = "docker.io"
+  image_repository         = "bitnamilegacy/kafka"
+  image_tag                = "4.0.0-debian-12-r10"
+  expose_public            = true
+  external_node_port       = 32092
+  external_host_port       = 9092
+  expose_dashboard_public  = true
+  dashboard_node_port      = 32081
+  dashboard_host_port      = 8088
+
+  dashboard = {
+    release_name     = "kafka-ui"
+    chart_repository = "https://provectus.github.io/kafka-ui-charts"
+    chart_name       = "kafka-ui"
+    chart_version    = null
+  }
+}
 ```
 
 Set real secrets before applying.
@@ -246,7 +347,7 @@ terraform plan
 terraform apply
 ```
 
-This root creates the remote `kind` cluster and writes a kubeconfig file locally. If you want public Backstage, Headlamp, or Keycloak access later, reserve the needed host-port mappings here with `backstage_port_mapping`, `headlamp_port_mapping`, and `keycloak_port_mapping`.
+This root creates the remote `kind` cluster and writes a kubeconfig file locally. If you want public Backstage, Headlamp, or Keycloak access later, reserve the needed host-port mappings here with `backstage_port_mapping`, `headlamp_port_mapping`, and `keycloak_port_mapping`. Kafka and Kafka UI now use separate Docker host proxy paths and do not require dedicated kind host-port mappings.
 
 ### Backstage
 
@@ -293,6 +394,46 @@ Generate a service-account token for Headlamp with:
 KUBECONFIG=/Users/mehdi/MyProject/elegant-infra-engine/components/all/blitzinfra-kubeconfig \
 kubectl -n headlamp create token headlamp
 ```
+
+### Kafka
+
+```bash
+cd components/kafka
+cp terraform.tfvars.example terraform.tfvars
+terraform init
+terraform plan
+terraform apply
+```
+
+This root expects an existing cluster and installs Kafka together with the open-source Provectus Kafka UI dashboard in one namespace.
+
+Kafka client workloads should use the in-cluster bootstrap server exposed by Terraform outputs:
+
+```bash
+terraform -chdir=components/kafka output bootstrap_servers
+```
+
+If `kafka.expose_public = true`, this root also creates a lightweight Docker host proxy that forwards `kafka.external_host_port` to the Kafka broker NodePort inside the existing kind cluster. External clients can then bootstrap through:
+
+```text
+<api_server_host>:9092
+```
+
+For the current example configuration that means:
+
+```text
+myserver:9092
+```
+
+If `kafka.expose_dashboard_public = true`, this root creates a lightweight Docker host proxy that forwards `kafka.dashboard_host_port` to the Kafka UI NodePort inside the existing kind cluster. That avoids cluster recreation and does not require `kubectl port-forward`.
+
+When `kafka.expose_dashboard_public = true`, access Kafka UI at:
+
+```text
+http://<api_server_host>:8088
+```
+
+This proxy path requires the same remote Docker SSH access used by the rest of the platform roots because Terraform manages the forwarding container through the remote Docker daemon.
 
 ### Keycloak
 

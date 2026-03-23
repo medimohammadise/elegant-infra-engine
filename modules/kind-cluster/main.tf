@@ -67,6 +67,16 @@ resource "kind_cluster" "this" {
       }
 
       dynamic "extra_port_mappings" {
+        for_each = var.kafka_dashboard_port_mapping != null ? [var.kafka_dashboard_port_mapping] : []
+        content {
+          container_port = extra_port_mappings.value.node_port
+          host_port      = extra_port_mappings.value.host_port
+          listen_address = "0.0.0.0"
+          protocol       = "TCP"
+        }
+      }
+
+      dynamic "extra_port_mappings" {
         for_each = var.keycloak_port_mapping != null ? [var.keycloak_port_mapping] : []
         content {
           container_port = extra_port_mappings.value.node_port
