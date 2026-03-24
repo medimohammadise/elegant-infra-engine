@@ -10,7 +10,7 @@ variable "api_server_host" {
 
 variable "kubernetes" {
   type = object({
-    cluster_name    = optional(string, "blitzinfra")
+    cluster_name    = optional(string, "blitz-cluster")
     api_server_port = optional(number, 6443)
     worker_count    = optional(number, 4)
     kind_node_image = optional(string, "kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e")

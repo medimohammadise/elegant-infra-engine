@@ -56,3 +56,9 @@ variable "recreate_revision" {
   description = "Change this token to force replacement of PostgreSQL resources."
   default     = ""
 }
+
+variable "create" {
+  type        = bool
+  description = "Create PostgreSQL container/resources."
+  default     = true
+}

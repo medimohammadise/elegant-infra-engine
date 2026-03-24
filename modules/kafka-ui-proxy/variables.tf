@@ -4,6 +4,12 @@ variable "network_name" {
   default     = "kind"
 }
 
+variable "create" {
+  type        = bool
+  description = "Create and manage the Kafka proxy Docker resources."
+  default     = true
+}
+
 variable "bind_address" {
   type        = string
   description = "Host IP address to bind the Kafka UI proxy to."
@@ -35,7 +41,7 @@ variable "container_name" {
 variable "image_name" {
   type        = string
   description = "Proxy image reference."
-  default     = "alpine/socat:latest"
+  default     = "alpine/socat:1.8.0.0"
 }
 
 variable "recreate_revision" {

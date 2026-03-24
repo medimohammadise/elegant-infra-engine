@@ -11,8 +11,19 @@ resource "terraform_data" "recreate" {
   input = var.recreate_revision
 }
 
+data "external" "container_exists" {
+  count = var.create ? 1 : 0
+
+  program = ["python3", "${path.module}/../../scripts/docker-container-check.py"]
+
+  query = {
+    name = var.container_name
+  }
+}
+
 resource "docker_volume" "this" {
-  name = var.volume_name
+  count = var.create ? 1 : 0
+  name  = var.volume_name
 
   lifecycle {
     replace_triggered_by = [terraform_data.recreate]
@@ -20,6 +31,7 @@ resource "docker_volume" "this" {
 }
 
 resource "docker_image" "this" {
+  count        = var.create ? 1 : 0
   name         = var.image_name
   keep_locally = true
 
@@ -29,7 +41,8 @@ resource "docker_image" "this" {
 }
 
 resource "docker_container" "this" {
-  image   = docker_image.this.image_id
+  count   = var.create && try(data.external.container_exists[0].result.exists, "false") == "false" ? 1 : 0
+  image   = docker_image.this[0].image_id
   name    = var.container_name
   restart = "unless-stopped"
 
@@ -50,7 +63,7 @@ resource "docker_container" "this" {
   ]
 
   volumes {
-    volume_name    = docker_volume.this.name
+    volume_name    = docker_volume.this[0].name
     container_path = "/var/lib/postgresql/data"
   }
 

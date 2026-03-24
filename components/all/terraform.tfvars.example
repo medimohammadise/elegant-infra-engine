@@ -17,16 +17,19 @@ keycloak_port_mapping = {
 }
 
 registry = {
-  network_name   = "registry_net"
-  create_network = true
-  bind_address   = "0.0.0.0"
-  port           = 5000
-  ui_bind        = "127.0.0.1"
-  ui_port        = 8081
-  title          = "Remote Docker Registry"
+  network_name    = "registry_net"
+  create_network  = true
+  create_registry = true
+  create_ui       = true
+  bind_address    = "0.0.0.0"
+  port            = 5000
+  ui_bind         = "127.0.0.1"
+  ui_port         = 8081
+  title           = "Remote Docker Registry"
 }
 
 postgres = {
+  create       = true
   bind_address = "0.0.0.0"
   port         = 5432
   db_name      = "blitzinfra"
@@ -36,10 +39,19 @@ postgres = {
 }
 
 kubernetes = {
-  cluster_name    = "blitzinfra"
+  cluster_name    = "blitz-cluster"
   api_server_port = 6443
   worker_count    = 4
   kind_node_image = "kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e"
+
+  # Reserve host-port bindings for NEW services that don't have a dedicated
+  # port_mapping variable in this module. Built-in services (backstage,
+  # headlamp, keycloak, grafana, prometheus) already reserve their ports
+  # automatically when expose_public = true — do NOT duplicate them here.
+  # Changing this list requires a cluster recreate (bump recreate_revision).
+  # extra_port_mappings = [
+  #   { node_port = 32100, host_port = 8100, description = "my-new-service" },
+  # ]
 }
 
 backstage = {
@@ -88,6 +100,8 @@ kafka = {
   expose_dashboard_public  = true
   dashboard_node_port      = 32081
   dashboard_host_port      = 8088
+  create_proxy             = true
+  create_dashboard_proxy   = true
   dashboard = {
     release_name     = "kafka-ui"
     chart_repository = "https://provectus.github.io/kafka-ui-charts"

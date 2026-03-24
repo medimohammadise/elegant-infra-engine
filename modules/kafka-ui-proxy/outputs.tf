@@ -1,6 +1,6 @@
 output "container_name" {
   description = "Name of the Kafka UI proxy container."
-  value       = docker_container.this.name
+  value       = try(docker_container.this[0].name, var.container_name)
 }
 
 output "external_port" {

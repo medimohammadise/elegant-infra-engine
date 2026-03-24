@@ -3,6 +3,7 @@
 This repository provisions a remote Docker registry, PostgreSQL, a `kind` Kubernetes cluster, Backstage, Headlamp, Kafka with an open-source Kafka UI dashboard, Keycloak, and an observability stack (Grafana, Loki, Tempo, and Prometheus) with Terraform. The layout is now split into reusable modules and deployable component roots so you can apply the full platform or only the parts you need.
 
 For contributor workflow and semantic commit guidance, see [CONTRIBUTING.md](/Users/mehdi/MyProject/elegant-infra-engine/CONTRIBUTING.md).
+For operator troubleshooting, including the recurring post-reboot `kind` public endpoint failure on the Docker host, see [TROUBLESHOOTING.md](/Users/mehdi/MyProject/elegant-infra-engine/TROUBLESHOOTING.md).
 
 ## Exposed URLs
 
@@ -317,6 +318,10 @@ kafka = {
 Set real secrets before applying.
 
 If the Docker network already exists on the target host and is not in Terraform state, set `registry.create_network = false` in `components/all` or `components/docker-registry`, or set `postgres.create_network = false` in `components/postgres`, so Terraform reuses the network by name instead of trying to create it again.
+
+If an existing PostgreSQL container should be left unmanaged, set `postgres.create = false` (in `components/all` or `components/postgres`) and keep only the connection settings (`access_host`, `port`, `db_name`, `user`, `password`) for downstream components.
+
+If existing Docker containers should be left unmanaged, set `registry.create_registry = false`, `registry.create_ui = false`, `kafka.create_proxy = false`, and/or `kafka.create_dashboard_proxy = false` in the relevant root (`components/all`, `components/docker-registry`, `components/kafka`).
 
 ## Component Workflows
 

@@ -37,6 +37,7 @@ module "docker_network" {
 module "postgres" {
   source = "../../modules/postgres"
 
+  create            = var.postgres.create
   network_name      = module.docker_network.name
   bind_address      = var.postgres.bind_address
   port              = var.postgres.port
@@ -50,6 +51,7 @@ module "postgres" {
 module "docker_registry" {
   source = "../../modules/docker-registry"
 
+  create            = var.registry.create_registry
   network_name      = module.docker_network.name
   bind_address      = var.registry.bind_address
   external_port     = var.registry.port
@@ -59,6 +61,7 @@ module "docker_registry" {
 module "docker_registry_ui" {
   source = "../../modules/docker-registry-ui"
 
+  create                = var.registry.create_ui
   network_name          = module.docker_network.name
   bind_address          = var.registry.ui_bind
   external_port         = var.registry.ui_port
@@ -67,8 +70,6 @@ module "docker_registry_ui" {
   registry_external_url = "http://${var.api_server_host}:${var.registry.ui_port}"
   image_registry        = "${var.api_server_host}:${var.registry.port}"
   recreate_revision     = var.recreate_revision
-
-  depends_on = [module.docker_registry]
 }
 
 module "kind_cluster" {
@@ -103,7 +104,8 @@ module "kind_cluster" {
     }
     : null
   )
-  recreate_revision = trimspace(try(var.kubernetes.recreate_revision, "")) != "" ? var.kubernetes.recreate_revision : var.recreate_revision
+  extra_port_mappings = try(var.kubernetes.extra_port_mappings, [])
+  recreate_revision   = trimspace(try(var.kubernetes.recreate_revision, "")) != "" ? var.kubernetes.recreate_revision : var.recreate_revision
 
   depends_on = [module.postgres]
 }
@@ -228,29 +230,27 @@ module "kafka" {
 }
 
 module "kafka_proxy" {
-  count  = var.kafka.enabled && var.kafka.expose_public ? 1 : 0
+  count  = var.kafka.enabled && var.kafka.expose_public && var.kafka.create_proxy ? 1 : 0
   source = "../../modules/kafka-ui-proxy"
 
+  create            = var.kafka.create_proxy
   target_host       = "${local.kind_cluster_name}-control-plane"
   target_port       = var.kafka.external_node_port
   external_port     = var.kafka.external_host_port
   container_name    = "${local.kind_cluster_name}-kafka-proxy"
   recreate_revision = trimspace(try(var.kafka.recreate_revision, "")) != "" ? var.kafka.recreate_revision : var.recreate_revision
-
-  depends_on = [module.kafka]
 }
 
 module "kafka_ui_proxy" {
-  count  = var.kafka.enabled && var.kafka.expose_dashboard_public ? 1 : 0
+  count  = var.kafka.enabled && var.kafka.expose_dashboard_public && var.kafka.create_dashboard_proxy ? 1 : 0
   source = "../../modules/kafka-ui-proxy"
 
+  create            = var.kafka.create_dashboard_proxy
   target_host       = "${local.kind_cluster_name}-control-plane"
   target_port       = var.kafka.dashboard_node_port
   external_port     = var.kafka.dashboard_host_port
   container_name    = "${local.kind_cluster_name}-kafka-ui-proxy"
   recreate_revision = trimspace(try(var.kafka.recreate_revision, "")) != "" ? var.kafka.recreate_revision : var.recreate_revision
-
-  depends_on = [module.kafka]
 }
 
 module "keycloak_namespace" {

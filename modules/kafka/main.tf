@@ -82,6 +82,10 @@ resource "helm_release" "kafka" {
       }
       controller = {
         replicaCount = var.kafka.controller_replica_count
+        persistence = {
+          enabled = var.kafka.persistence_enabled
+          size    = var.kafka.persistence_size
+        }
       }
       broker = {
         replicaCount = var.kafka.broker_replica_count

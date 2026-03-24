@@ -1,6 +1,6 @@
 output "container_id" {
   description = "ID of the registry UI container."
-  value       = docker_container.this.id
+  value       = try(docker_container.this[0].id, null)
 }
 
 output "external_port" {

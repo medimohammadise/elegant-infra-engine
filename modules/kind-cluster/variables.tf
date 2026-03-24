@@ -1,7 +1,7 @@
 variable "cluster_name" {
   type        = string
   description = "Name of the kind cluster."
-  default     = "blitzinfra"
+  default     = "blitz-cluster"
 }
 
 variable "api_server_port" {
@@ -83,6 +83,34 @@ variable "prometheus_port_mapping" {
   })
   description = "Optional NodePort to host-port mapping for Prometheus."
   default     = null
+}
+
+variable "dependencytrack_api_port_mapping" {
+  type = object({
+    node_port = number
+    host_port = number
+  })
+  description = "Optional NodePort to host-port mapping for the DependencyTrack API."
+  default     = null
+}
+
+variable "dependencytrack_frontend_port_mapping" {
+  type = object({
+    node_port = number
+    host_port = number
+  })
+  description = "Optional NodePort to host-port mapping for the DependencyTrack frontend."
+  default     = null
+}
+
+variable "extra_port_mappings" {
+  type = list(object({
+    node_port   = number
+    host_port   = number
+    description = optional(string, "")
+  }))
+  description = "Additional NodePort to host-port mappings to reserve on the kind control-plane at cluster creation time. Use this for new services instead of adding per-service variables to this module."
+  default     = []
 }
 
 variable "kubeconfig_path" {
