@@ -3,6 +3,7 @@
 This repository provisions a remote Docker registry, PostgreSQL, a `kind` Kubernetes cluster, Backstage, Headlamp, Kafka with an open-source Kafka UI dashboard, Keycloak, and an observability stack (Grafana, Loki, Tempo, and Prometheus) with Terraform. The layout is now split into reusable modules and deployable component roots so you can apply the full platform or only the parts you need.
 
 For contributor workflow and semantic commit guidance, see [CONTRIBUTING.md](/Users/mehdi/MyProject/elegant-infra-engine/CONTRIBUTING.md).
+For operator troubleshooting, including the recurring post-reboot `kind` public endpoint failure on the Docker host, see [TROUBLESHOOTING.md](/Users/mehdi/MyProject/elegant-infra-engine/TROUBLESHOOTING.md).
 
 ## Exposed URLs
 
