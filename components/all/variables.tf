@@ -22,39 +22,47 @@ variable "backstage_backend_auth_key" {
 
 variable "backstage_auth_provider" {
   type        = string
-  description = "Backstage sign-in provider mode."
-  default     = "guest"
+  description = "Backstage sign-in provider mode. This stack enforces OAuth proxy mode."
+  default     = "keycloak_proxy"
 
   validation {
-    condition     = contains(["none", "guest", "keycloak"], var.backstage_auth_provider)
-    error_message = "backstage_auth_provider must be none, guest, or keycloak."
+    condition     = var.backstage_auth_provider == "keycloak_proxy"
+    error_message = "backstage_auth_provider must be keycloak_proxy."
   }
 }
 
 variable "backstage_keycloak_base_url" {
   type        = string
-  description = "Keycloak base URL used by Backstage when backstage_auth_provider is keycloak."
+  description = "Keycloak base URL used by Backstage when backstage_auth_provider is keycloak_proxy."
   default     = null
   nullable    = true
 }
 
 variable "backstage_keycloak_realm" {
   type        = string
-  description = "Keycloak realm used by Backstage when backstage_auth_provider is keycloak."
+  description = "Keycloak realm used by Backstage when backstage_auth_provider is keycloak_proxy."
   default     = null
   nullable    = true
 }
 
 variable "backstage_keycloak_client_id" {
   type        = string
-  description = "Keycloak client ID used by Backstage when backstage_auth_provider is keycloak."
+  description = "Keycloak client ID used by Backstage when backstage_auth_provider is keycloak_proxy."
   default     = null
   nullable    = true
 }
 
 variable "backstage_keycloak_client_secret" {
   type        = string
-  description = "Keycloak client secret used by Backstage when backstage_auth_provider is keycloak."
+  description = "Keycloak client secret used by Backstage when backstage_auth_provider is keycloak_proxy."
+  default     = null
+  nullable    = true
+  sensitive   = true
+}
+
+variable "backstage_oauth2_proxy_cookie_secret" {
+  type        = string
+  description = "Cookie secret used by oauth2-proxy when backstage_auth_provider is keycloak_proxy."
   default     = null
   nullable    = true
   sensitive   = true
@@ -113,6 +121,7 @@ variable "backstage" {
     enabled           = optional(bool, true)
     namespace         = optional(string, "backstage")
     chart_version     = optional(string, "2.6.3")
+    image_repository  = optional(string, "ghcr.io/backstage/backstage")
     image_tag         = optional(string, "1.30.2")
     base_url          = optional(string)
     expose_public     = optional(bool, true)

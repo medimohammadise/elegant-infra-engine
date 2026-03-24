@@ -21,6 +21,12 @@ variable "image_tag" {
   default     = "1.30.2"
 }
 
+variable "image_repository" {
+  type        = string
+  description = "Backstage application image repository."
+  default     = "ghcr.io/backstage/backstage"
+}
+
 variable "base_url" {
   type        = string
   description = "Base URL used by the Backstage app and backend."
@@ -90,11 +96,11 @@ variable "backend_auth_key" {
 variable "auth_provider" {
   type        = string
   description = "Backstage sign-in provider mode."
-  default     = "guest"
+  default     = "keycloak_proxy"
 
   validation {
-    condition     = contains(["none", "guest", "keycloak"], var.auth_provider)
-    error_message = "auth_provider must be none, guest, or keycloak."
+    condition     = contains(["none", "keycloak_proxy"], var.auth_provider)
+    error_message = "auth_provider must be none or keycloak_proxy."
   }
 }
 
@@ -121,10 +127,24 @@ variable "keycloak_client_id" {
 
 variable "keycloak_client_secret" {
   type        = string
-  description = "Keycloak client secret used by Backstage."
+  description = "Keycloak client secret used by the auth proxy."
   default     = null
   nullable    = true
   sensitive   = true
+}
+
+variable "oauth2_proxy_cookie_secret" {
+  type        = string
+  description = "Cookie secret used by oauth2-proxy in keycloak_proxy mode."
+  default     = null
+  nullable    = true
+  sensitive   = true
+}
+
+variable "public_node_port" {
+  type        = number
+  description = "Public NodePort exposed by oauth2-proxy in keycloak_proxy mode."
+  default     = null
 }
 
 variable "recreate_revision" {
