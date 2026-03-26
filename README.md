@@ -406,8 +406,7 @@ http://myserver:8443
 Generate a service-account token for Headlamp with:
 
 ```bash
-KUBECONFIG=/Users/mehdi/MyProject/elegant-infra-engine/components/all/blitzinfra-kubeconfig \
-kubectl -n headlamp create token headlamp
+kubectl --kubeconfig=components/all/blitz-cluster-kubeconfig create token headlamp -n headlamp --duration=8760h
 ```
 
 ### Kafka
