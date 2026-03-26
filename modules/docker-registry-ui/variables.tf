@@ -3,6 +3,12 @@ variable "network_name" {
   description = "Docker network used by the registry UI."
 }
 
+variable "create" {
+  type        = bool
+  description = "Create and manage the registry UI Docker resources."
+  default     = true
+}
+
 variable "bind_address" {
   type        = string
   description = "Host IP address to bind the registry UI to."

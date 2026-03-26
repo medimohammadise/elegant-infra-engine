@@ -76,20 +76,23 @@ variable "bootstrap_namespace" {
 
 variable "registry" {
   type = object({
-    network_name   = optional(string, "registry_net")
-    create_network = optional(bool, true)
-    bind_address   = optional(string, "0.0.0.0")
-    port           = optional(number, 5000)
-    ui_bind        = optional(string, "127.0.0.1")
-    ui_port        = optional(number, 8081)
-    title          = optional(string, "Remote Docker Registry")
+    network_name    = optional(string, "registry_net")
+    create_network  = optional(bool, true)
+    create_registry = optional(bool, true)
+    create_ui       = optional(bool, true)
+    bind_address    = optional(string, "0.0.0.0")
+    port            = optional(number, 5000)
+    ui_bind         = optional(string, "127.0.0.1")
+    ui_port         = optional(number, 8081)
+    title           = optional(string, "Remote Docker Registry")
   })
-  description = "Docker registry and registry UI settings."
+  description = "Docker registry and registry UI settings. Set create_registry/create_ui=false to reuse existing containers without managing them in Terraform."
   default     = {}
 }
 
 variable "postgres" {
   type = object({
+    create       = optional(bool, true)
     bind_address = optional(string, "0.0.0.0")
     access_host  = optional(string)
     port         = optional(number, 5432)
@@ -98,7 +101,7 @@ variable "postgres" {
     password     = string
     volume_name  = optional(string, "postgres_data")
   })
-  description = "PostgreSQL settings. access_host optionally overrides the database host used by in-cluster workloads."
+  description = "PostgreSQL settings. Set create=false to reuse an existing PostgreSQL container without managing it in Terraform. access_host optionally overrides the database host used by in-cluster workloads."
   sensitive   = true
 }
 
@@ -111,8 +114,13 @@ variable "kubernetes" {
     kind_node_image   = optional(string, "kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e")
     kubeconfig_path   = optional(string)
     recreate_revision = optional(string, "")
+    extra_port_mappings = optional(list(object({
+      node_port   = number
+      host_port   = number
+      description = optional(string, "")
+    })), [])
   })
-  description = "kind cluster settings."
+  description = "kind cluster settings. Use extra_port_mappings to reserve host-port bindings for new services without modifying the kind-cluster module."
   default     = {}
 }
 
@@ -183,6 +191,8 @@ variable "kafka" {
     expose_dashboard_public  = optional(bool, false)
     dashboard_node_port      = optional(number, 32081)
     dashboard_host_port      = optional(number, 8088)
+    create_proxy             = optional(bool, true)
+    create_dashboard_proxy   = optional(bool, true)
     dashboard = optional(object({
       release_name     = optional(string, "kafka-ui")
       chart_repository = optional(string, "https://provectus.github.io/kafka-ui-charts")

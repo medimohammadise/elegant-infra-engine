@@ -49,6 +49,8 @@ variable "kafka" {
     expose_dashboard_public  = optional(bool, false)
     dashboard_node_port      = optional(number, 32081)
     dashboard_host_port      = optional(number, 8088)
+    create_proxy             = optional(bool, true)
+    create_dashboard_proxy   = optional(bool, true)
     dashboard = optional(object({
       release_name     = optional(string, "kafka-ui")
       chart_repository = optional(string, "https://provectus.github.io/kafka-ui-charts")

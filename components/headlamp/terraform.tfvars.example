@@ -1,5 +1,5 @@
-kubeconfig_path = "./blitzinfra-kubeconfig"
-cluster_name    = "blitzinfra"
+kubeconfig_path = "../kubeconfigs/blitzinfra-kubeconfig"
+cluster_name    = "blitz-cluster"
 
 headlamp = {
   namespace                   = "headlamp"

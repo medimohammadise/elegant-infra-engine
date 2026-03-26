@@ -1,11 +1,11 @@
 output "container_id" {
   description = "ID of the PostgreSQL container."
-  value       = docker_container.this.id
+  value       = try(docker_container.this[0].id, null)
 }
 
 output "container_name" {
   description = "Name of the PostgreSQL container."
-  value       = docker_container.this.name
+  value       = try(docker_container.this[0].name, var.container_name)
 }
 
 output "port" {

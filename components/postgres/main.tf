@@ -9,6 +9,7 @@ module "docker_network" {
 module "postgres" {
   source = "../../modules/postgres"
 
+  create            = var.postgres.create
   network_name      = module.docker_network.name
   bind_address      = var.postgres.bind_address
   port              = var.postgres.port

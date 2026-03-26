@@ -319,6 +319,10 @@ Set real secrets before applying.
 
 If the Docker network already exists on the target host and is not in Terraform state, set `registry.create_network = false` in `components/all` or `components/docker-registry`, or set `postgres.create_network = false` in `components/postgres`, so Terraform reuses the network by name instead of trying to create it again.
 
+If an existing PostgreSQL container should be left unmanaged, set `postgres.create = false` (in `components/all` or `components/postgres`) and keep only the connection settings (`access_host`, `port`, `db_name`, `user`, `password`) for downstream components.
+
+If existing Docker containers should be left unmanaged, set `registry.create_registry = false`, `registry.create_ui = false`, `kafka.create_proxy = false`, and/or `kafka.create_dashboard_proxy = false` in the relevant root (`components/all`, `components/docker-registry`, `components/kafka`).
+
 ## Component Workflows
 
 ### Docker Registry

@@ -1,11 +1,7 @@
 terraform {
   required_providers {
-    kind = {
-      source  = "tehcyx/kind"
-      version = "~> 0.5.0"
-    }
-    local = {
-      source  = "hashicorp/local"
+    external = {
+      source  = "hashicorp/external"
       version = "~> 2.0"
     }
   }
@@ -13,118 +9,110 @@ terraform {
 
 locals {
   kubeconfig_path = var.kubeconfig_path != null ? var.kubeconfig_path : "${path.root}/${var.cluster_name}-kubeconfig"
-}
 
-resource "terraform_data" "recreate" {
-  input = var.recreate_revision
-}
+  extra_port_mappings = concat(
+    [
+      for mapping in [
+        var.backstage_port_mapping,
+        var.headlamp_port_mapping,
+        var.kafka_dashboard_port_mapping,
+        var.keycloak_port_mapping,
+        var.dependencytrack_api_port_mapping,
+        var.dependencytrack_frontend_port_mapping,
+        var.grafana_port_mapping,
+        var.prometheus_port_mapping,
+      ] : mapping if mapping != null
+    ],
+    [
+      for mapping in var.extra_port_mappings : {
+        node_port = mapping.node_port
+        host_port = mapping.host_port
+      }
+    ]
+  )
 
-resource "kind_cluster" "this" {
-  name           = var.cluster_name
-  node_image     = var.kind_node_image
-  wait_for_ready = true
-
-  kind_config {
-    kind        = "Cluster"
-    api_version = "kind.x-k8s.io/v1alpha4"
-
-    networking {
-      api_server_address = "0.0.0.0"
-      api_server_port    = var.api_server_port
-    }
-
-    node {
+  control_plane_node = merge(
+    {
       role = "control-plane"
-      kubeadm_config_patches = [
-        <<-EOF
+      kubeadmConfigPatches = [
+        <<-EOT
         kind: ClusterConfiguration
         apiServer:
           certSANs:
-          - "${var.api_server_host}"
-          - "${var.ssh_context_host}"
-          - "localhost"
-        EOF
+            - "${var.api_server_host}"
+            - "${var.ssh_context_host}"
+            - "localhost"
+        EOT
       ]
-
-      dynamic "extra_port_mappings" {
-        for_each = var.backstage_port_mapping != null ? [var.backstage_port_mapping] : []
-        content {
-          container_port = extra_port_mappings.value.node_port
-          host_port      = extra_port_mappings.value.host_port
-          listen_address = "0.0.0.0"
-          protocol       = "TCP"
+    },
+    length(local.extra_port_mappings) > 0 ? {
+      extraPortMappings = [
+        for mapping in local.extra_port_mappings : {
+          containerPort = mapping.node_port
+          hostPort      = mapping.host_port
+          listenAddress = "0.0.0.0"
+          protocol      = "TCP"
         }
-      }
+      ]
+    } : {}
+  )
 
-      dynamic "extra_port_mappings" {
-        for_each = var.headlamp_port_mapping != null ? [var.headlamp_port_mapping] : []
-        content {
-          container_port = extra_port_mappings.value.node_port
-          host_port      = extra_port_mappings.value.host_port
-          listen_address = "0.0.0.0"
-          protocol       = "TCP"
-        }
-      }
-
-      dynamic "extra_port_mappings" {
-        for_each = var.kafka_dashboard_port_mapping != null ? [var.kafka_dashboard_port_mapping] : []
-        content {
-          container_port = extra_port_mappings.value.node_port
-          host_port      = extra_port_mappings.value.host_port
-          listen_address = "0.0.0.0"
-          protocol       = "TCP"
-        }
-      }
-
-      dynamic "extra_port_mappings" {
-        for_each = var.keycloak_port_mapping != null ? [var.keycloak_port_mapping] : []
-        content {
-          container_port = extra_port_mappings.value.node_port
-          host_port      = extra_port_mappings.value.host_port
-          listen_address = "0.0.0.0"
-          protocol       = "TCP"
-        }
-      }
-
-      dynamic "extra_port_mappings" {
-        for_each = var.grafana_port_mapping != null ? [var.grafana_port_mapping] : []
-        content {
-          container_port = extra_port_mappings.value.node_port
-          host_port      = extra_port_mappings.value.host_port
-          listen_address = "0.0.0.0"
-          protocol       = "TCP"
-        }
-      }
-
-      dynamic "extra_port_mappings" {
-        for_each = var.prometheus_port_mapping != null ? [var.prometheus_port_mapping] : []
-        content {
-          container_port = extra_port_mappings.value.node_port
-          host_port      = extra_port_mappings.value.host_port
-          listen_address = "0.0.0.0"
-          protocol       = "TCP"
-        }
-      }
+  kind_config = yamlencode({
+    kind       = "Cluster"
+    apiVersion = "kind.x-k8s.io/v1alpha4"
+    networking = {
+      apiServerAddress = "0.0.0.0"
+      apiServerPort    = var.api_server_port
     }
+    nodes = concat(
+      [local.control_plane_node],
+      [for _ in range(var.worker_count) : { role = "worker" }]
+    )
+  })
+}
 
-    dynamic "node" {
-      for_each = range(var.worker_count)
-      content {
-        role = "worker"
-      }
-    }
-  }
+data "external" "cluster_status" {
+  program = [
+    "bash", "-c",
+    "DOCKER_HOST=ssh://${var.ssh_context_host} '${path.module}/../../scripts/kind-cluster-manager.sh' status",
+  ]
 
-  lifecycle {
-    replace_triggered_by = [terraform_data.recreate]
+  query = {
+    cluster_name = var.cluster_name
   }
 }
 
-resource "local_sensitive_file" "kubeconfig" {
-  filename = local.kubeconfig_path
-  content = replace(
-    kind_cluster.this.kubeconfig,
-    "https://0.0.0.0:${var.api_server_port}",
-    "https://${var.api_server_host}:${var.api_server_port}"
-  )
+resource "terraform_data" "cluster" {
+  triggers_replace = {
+    cluster_name      = var.cluster_name
+    ssh_context_host  = var.ssh_context_host
+    kind_node_image   = var.kind_node_image
+    kind_config_sha   = sha256(local.kind_config)
+    recreate_revision = var.recreate_revision
+    cluster_exists    = try(data.external.cluster_status.result.exists, "false")
+  }
+
+  provisioner "local-exec" {
+    command = "${path.module}/../../scripts/kind-cluster-manager.sh create"
+
+    environment = {
+      DOCKER_HOST                = "ssh://${var.ssh_context_host}"
+      KIND_CLUSTER_NAME          = var.cluster_name
+      KIND_NODE_IMAGE            = var.kind_node_image
+      KIND_CLUSTER_CONFIG_BASE64 = base64encode(local.kind_config)
+      KIND_KUBECONFIG_PATH       = local.kubeconfig_path
+      KIND_API_SERVER_HOST       = var.api_server_host
+      KIND_API_SERVER_PORT       = tostring(var.api_server_port)
+    }
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = "${path.module}/../../scripts/kind-cluster-manager.sh delete"
+
+    environment = {
+      DOCKER_HOST       = "ssh://${self.triggers_replace.ssh_context_host}"
+      KIND_CLUSTER_NAME = self.triggers_replace.cluster_name
+    }
+  }
 }

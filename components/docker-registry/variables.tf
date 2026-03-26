@@ -16,13 +16,15 @@ variable "api_server_host" {
 
 variable "registry" {
   type = object({
-    network_name   = optional(string, "registry_net")
-    create_network = optional(bool, true)
-    bind_address   = optional(string, "0.0.0.0")
-    port           = optional(number, 5000)
-    ui_bind        = optional(string, "127.0.0.1")
-    ui_port        = optional(number, 8081)
-    title          = optional(string, "Remote Docker Registry")
+    network_name    = optional(string, "registry_net")
+    create_network  = optional(bool, true)
+    create_registry = optional(bool, true)
+    create_ui       = optional(bool, true)
+    bind_address    = optional(string, "0.0.0.0")
+    port            = optional(number, 5000)
+    ui_bind         = optional(string, "127.0.0.1")
+    ui_port         = optional(number, 8081)
+    title           = optional(string, "Remote Docker Registry")
   })
   description = "Docker registry and registry UI settings."
   default     = {}

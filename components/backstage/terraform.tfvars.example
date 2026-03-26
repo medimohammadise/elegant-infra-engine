@@ -1,5 +1,5 @@
-kubeconfig_path = "./blitzinfra-kubeconfig"
-cluster_name    = "blitzinfra"
+kubeconfig_path = "../kubeconfigs/blitzinfra-kubeconfig"
+cluster_name    = "blitz-cluster"
 keycloak_url    = "https://sso.example.com"
 backstage_backend_auth_key = "replace-with-long-random-secret"
 backstage_auth_provider = "keycloak_proxy"

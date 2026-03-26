@@ -1,5 +1,5 @@
-kubeconfig_path = "./blitzinfra-kubeconfig"
-cluster_name    = "blitzinfra"
+kubeconfig_path = "../kubeconfigs/blitzinfra-kubeconfig"
+cluster_name    = "blitz-cluster"
 ssh_context_host = "myserver"
 api_server_host = "myserver"
 
@@ -22,6 +22,8 @@ kafka = {
   expose_dashboard_public  = true
   dashboard_node_port      = 32081
   dashboard_host_port      = 8088
+  create_proxy             = true
+  create_dashboard_proxy   = true
 
   dashboard = {
     release_name     = "kafka-ui"

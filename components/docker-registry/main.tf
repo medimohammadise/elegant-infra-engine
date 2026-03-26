@@ -9,6 +9,7 @@ module "docker_network" {
 module "docker_registry" {
   source = "../../modules/docker-registry"
 
+  create            = var.registry.create_registry
   network_name      = module.docker_network.name
   bind_address      = var.registry.bind_address
   external_port     = var.registry.port
@@ -18,6 +19,7 @@ module "docker_registry" {
 module "docker_registry_ui" {
   source = "../../modules/docker-registry-ui"
 
+  create                = var.registry.create_ui
   network_name          = module.docker_network.name
   bind_address          = var.registry.ui_bind
   external_port         = var.registry.ui_port
@@ -26,6 +28,4 @@ module "docker_registry_ui" {
   registry_external_url = "http://${var.api_server_host}:${var.registry.ui_port}"
   image_registry        = "${var.api_server_host}:${var.registry.port}"
   recreate_revision     = var.recreate_revision
-
-  depends_on = [module.docker_registry]
 }

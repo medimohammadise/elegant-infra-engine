@@ -2,7 +2,7 @@ ssh_context_host = "myserver"
 api_server_host  = "myserver"
 
 kubernetes = {
-  cluster_name    = "blitzinfra"
+  cluster_name    = "blitz-cluster"
   api_server_port = 6443
   worker_count    = 4
   kind_node_image = "kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e"

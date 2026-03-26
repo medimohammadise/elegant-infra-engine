@@ -1,9 +1,14 @@
+locals {
+  network_id   = length(docker_network.this) > 0 ? docker_network.this[0].id : try(data.external.network_exists.result.id, "")
+  network_name = var.name
+}
+
 output "id" {
   description = "ID of the Docker network."
-  value       = one(concat(docker_network.this[*].id, data.docker_network.existing[*].id))
+  value       = local.network_id
 }
 
 output "name" {
   description = "Name of the Docker network."
-  value       = one(concat(docker_network.this[*].name, data.docker_network.existing[*].name))
+  value       = local.network_name
 }

@@ -11,6 +11,7 @@ variable "ssh_private_key_path" {
 
 variable "postgres" {
   type = object({
+    create         = optional(bool, true)
     network_name   = optional(string, "registry_net")
     create_network = optional(bool, true)
     bind_address   = optional(string, "0.0.0.0")

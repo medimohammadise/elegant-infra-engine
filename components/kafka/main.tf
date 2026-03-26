@@ -33,27 +33,25 @@ module "kafka" {
 }
 
 module "kafka_proxy" {
-  count  = var.kafka.expose_public ? 1 : 0
+  count  = var.kafka.expose_public && var.kafka.create_proxy ? 1 : 0
   source = "../../modules/kafka-ui-proxy"
 
+  create            = var.kafka.create_proxy
   target_host       = "${var.cluster_name}-control-plane"
   target_port       = var.kafka.external_node_port
   external_port     = var.kafka.external_host_port
   container_name    = "${var.cluster_name}-kafka-proxy"
   recreate_revision = var.recreate_revision
-
-  depends_on = [module.kafka]
 }
 
 module "kafka_ui_proxy" {
-  count  = var.kafka.expose_dashboard_public ? 1 : 0
+  count  = var.kafka.expose_dashboard_public && var.kafka.create_dashboard_proxy ? 1 : 0
   source = "../../modules/kafka-ui-proxy"
 
+  create            = var.kafka.create_dashboard_proxy
   target_host       = "${var.cluster_name}-control-plane"
   target_port       = var.kafka.dashboard_node_port
   external_port     = var.kafka.dashboard_host_port
   container_name    = "${var.cluster_name}-kafka-ui-proxy"
   recreate_revision = var.recreate_revision
-
-  depends_on = [module.kafka]
 }

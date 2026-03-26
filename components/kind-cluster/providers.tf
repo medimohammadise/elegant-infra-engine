@@ -1,14 +1,8 @@
 terraform {
   required_providers {
-    kind = {
-      source  = "tehcyx/kind"
-      version = "~> 0.5.0"
-    }
-    local = {
-      source  = "hashicorp/local"
+    external = {
+      source  = "hashicorp/external"
       version = "~> 2.0"
     }
   }
 }
-
-provider "kind" {}
