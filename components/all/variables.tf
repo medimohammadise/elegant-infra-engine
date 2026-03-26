@@ -300,6 +300,42 @@ variable "observability" {
   default     = {}
 }
 
+variable "dependencytrack" {
+  type = object({
+    enabled       = optional(bool, false)
+    namespace     = optional(string, "dependencytrack")
+    expose_public = optional(bool, false)
+    db_name       = optional(string, "dependencytrack")
+    db_username   = optional(string, "dependencytrack")
+    api = optional(object({
+      image_repository = optional(string, "dependencytrack/apiserver")
+      image_tag        = optional(string, "4.12.4")
+      node_port        = optional(number, 32091)
+      host_port        = optional(number, 8081)
+      memory_request   = optional(string, "2Gi")
+      memory_limit     = optional(string, "4Gi")
+      cpu_request      = optional(string, "500m")
+    }), {})
+    frontend = optional(object({
+      image_repository = optional(string, "dependencytrack/frontend")
+      image_tag        = optional(string, "4.12.2")
+      node_port        = optional(number, 32100)
+      host_port        = optional(number, 8090)
+    }), {})
+    recreate_revision = optional(string, "")
+  })
+  description = "Dependency-Track deployment settings."
+  default     = {}
+}
+
+variable "dependencytrack_db_password" {
+  type        = string
+  description = "PostgreSQL password for the Dependency-Track database user."
+  default     = null
+  nullable    = true
+  sensitive   = true
+}
+
 variable "keycloak_url" {
   type        = string
   description = "Optional externally managed Keycloak base URL to surface with the platform endpoints."

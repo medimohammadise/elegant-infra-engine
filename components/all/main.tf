@@ -24,6 +24,17 @@ locals {
     ? "http://${var.api_server_host}:${var.observability.prometheus_host_port}"
     : null
   )
+
+  dependencytrack_api_url = (
+    var.dependencytrack.enabled && var.dependencytrack.expose_public
+    ? "http://${var.api_server_host}:${var.dependencytrack.api.host_port}"
+    : null
+  )
+  dependencytrack_frontend_url = (
+    var.dependencytrack.enabled && var.dependencytrack.expose_public
+    ? "http://${var.api_server_host}:${var.dependencytrack.frontend.host_port}"
+    : null
+  )
 }
 
 module "docker_network" {
@@ -104,6 +115,14 @@ module "kind_cluster" {
     }
     : null
   )
+  dependencytrack_api_port_mapping = var.dependencytrack.enabled && var.dependencytrack.expose_public ? {
+    node_port = var.dependencytrack.api.node_port
+    host_port = var.dependencytrack.api.host_port
+  } : null
+  dependencytrack_frontend_port_mapping = var.dependencytrack.enabled && var.dependencytrack.expose_public ? {
+    node_port = var.dependencytrack.frontend.node_port
+    host_port = var.dependencytrack.frontend.host_port
+  } : null
   extra_port_mappings = try(var.kubernetes.extra_port_mappings, [])
   recreate_revision   = trimspace(try(var.kubernetes.recreate_revision, "")) != "" ? var.kubernetes.recreate_revision : var.recreate_revision
 
@@ -311,4 +330,40 @@ module "observability" {
   recreate_revision = var.recreate_revision
 
   depends_on = [module.observability_namespace]
+}
+
+module "dependencytrack_namespace" {
+  count  = var.dependencytrack.enabled ? 1 : 0
+  source = "../../modules/k8s-namespace"
+
+  name = var.dependencytrack.namespace
+
+  depends_on = [terraform_data.kind_cluster_ready]
+}
+
+module "dependencytrack" {
+  count  = var.dependencytrack.enabled ? 1 : 0
+  source = "../../modules/dependencytrack"
+
+  namespace             = module.dependencytrack_namespace[0].name
+  api_server_host       = var.api_server_host
+  api_image             = "${var.dependencytrack.api.image_repository}:${var.dependencytrack.api.image_tag}"
+  api_service_type      = var.dependencytrack.expose_public ? "NodePort" : "ClusterIP"
+  api_node_port         = var.dependencytrack.expose_public ? var.dependencytrack.api.node_port : null
+  api_host_port         = var.dependencytrack.api.host_port
+  api_memory_request    = var.dependencytrack.api.memory_request
+  api_memory_limit      = var.dependencytrack.api.memory_limit
+  api_cpu_request       = var.dependencytrack.api.cpu_request
+  frontend_image        = "${var.dependencytrack.frontend.image_repository}:${var.dependencytrack.frontend.image_tag}"
+  frontend_service_type = var.dependencytrack.expose_public ? "NodePort" : "ClusterIP"
+  frontend_node_port    = var.dependencytrack.expose_public ? var.dependencytrack.frontend.node_port : null
+  frontend_host_port    = var.dependencytrack.frontend.host_port
+  database_host         = local.postgres_access_host
+  database_port         = module.postgres.port
+  database_name         = var.dependencytrack.db_name
+  database_username     = var.dependencytrack.db_username
+  database_password     = coalesce(var.dependencytrack_db_password, var.postgres.password)
+  recreate_revision     = trimspace(try(var.dependencytrack.recreate_revision, "")) != "" ? var.dependencytrack.recreate_revision : var.recreate_revision
+
+  depends_on = [module.dependencytrack_namespace]
 }

@@ -72,6 +72,16 @@ output "prometheus_url" {
   value       = local.prometheus_public_url
 }
 
+output "dependencytrack_api_url" {
+  description = "Dependency-Track API server URL when publicly exposed."
+  value       = local.dependencytrack_api_url
+}
+
+output "dependencytrack_frontend_url" {
+  description = "Dependency-Track frontend URL when publicly exposed."
+  value       = local.dependencytrack_frontend_url
+}
+
 output "exposed_urls" {
   description = "Consolidated platform endpoints, including optional external dependencies."
   value = {
@@ -82,12 +92,14 @@ output "exposed_urls" {
       ? "http://${var.registry.ui_bind}:${var.registry.ui_port}"
       : "http://${var.api_server_host}:${var.registry.ui_port}"
     )
-    backstage       = var.backstage.enabled ? local.backstage_base_url : null
-    headlamp        = var.headlamp.enabled && var.headlamp.expose_public ? "http://${var.api_server_host}:${var.headlamp.host_port}" : null
-    kafka           = var.kafka.enabled ? module.kafka[0].public_bootstrap_servers : null
-    kafka_dashboard = local.kafka_dashboard_public_url
-    keycloak        = var.keycloak.enabled && var.keycloak.expose_public ? local.keycloak_public_url : var.keycloak_url
-    grafana         = local.grafana_public_url
-    prometheus      = local.prometheus_public_url
+    backstage                = var.backstage.enabled ? local.backstage_base_url : null
+    headlamp                 = var.headlamp.enabled && var.headlamp.expose_public ? "http://${var.api_server_host}:${var.headlamp.host_port}" : null
+    kafka                    = var.kafka.enabled ? module.kafka[0].public_bootstrap_servers : null
+    kafka_dashboard          = local.kafka_dashboard_public_url
+    keycloak                 = var.keycloak.enabled && var.keycloak.expose_public ? local.keycloak_public_url : var.keycloak_url
+    grafana                  = local.grafana_public_url
+    prometheus               = local.prometheus_public_url
+    dependencytrack_api      = local.dependencytrack_api_url
+    dependencytrack_frontend = local.dependencytrack_frontend_url
   }
 }
