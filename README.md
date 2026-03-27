@@ -9,17 +9,17 @@ For operator troubleshooting, including the recurring post-reboot `kind` public 
 
 Use Terraform outputs as the source of truth for the live values.
 
-| Service | Public URL | Root | Notes |
-| --- | --- | --- | --- |
-| Kubernetes API | `https://<api_server_host>:6443` | `components/kind-cluster` or `components/all` | Port follows `kubernetes.api_server_port`. |
-| Docker Registry | `http://<api_server_host>:5000` | `components/docker-registry` or `components/all` | Port follows `registry.port`. |
-| Registry UI | `http://<api_server_host>:8081` | `components/docker-registry` or `components/all` | If `registry.ui_bind` is `127.0.0.1` or `localhost`, use that bind address instead. |
+| Service | Public URL                        | Root | Notes |
+| --- |-----------------------------------| --- | --- |
+| Kubernetes API | `https://<api_server_host>:6443`  | `components/kind-cluster` or `components/all` | Port follows `kubernetes.api_server_port`. |
+| Docker Registry | `http://<api_server_host>:5000`   | `components/docker-registry` or `components/all` | Port follows `registry.port`. |
+| Registry UI | `http://<api_server_host>:8081`   | `components/docker-registry` or `components/all` | If `registry.ui_bind` is `127.0.0.1` or `localhost`, use that bind address instead. |
 | Backstage | `https://<api_server_host>:7007/` | `components/backstage` or `components/all` | Requires the matching Backstage host-port mapping on the kind cluster. |
-| Headlamp | `http://<api_server_host>:8443/` | `components/headlamp` or `components/all` | Requires the matching Headlamp host-port mapping on the kind cluster. |
-| Kafka UI | `http://<api_server_host>:8088` | `components/kafka` or `components/all` | Requires `kafka.expose_dashboard_public = true` and the Docker-managed Kafka UI proxy on the remote host. |
-| Keycloak | `http://<api_server_host>:8080/` | `components/keycloak` | Requires `keycloak.expose_public = true` and the matching Keycloak host-port mapping on the kind cluster. |
-| Grafana | `http://<api_server_host>:3000` | `components/observability` or `components/all` | Requires `observability.expose_public = true` and the matching Grafana host-port mapping on the kind cluster. |
-| Prometheus | `http://<api_server_host>:9090` | `components/observability` or `components/all` | Requires `observability.expose_public = true`, `observability.prometheus.enabled = true`, and the matching Prometheus host-port mapping on the kind cluster. |
+| Headlamp | `http://<api_server_host>:8443/`  | `components/headlamp` or `components/all` | Requires the matching Headlamp host-port mapping on the kind cluster. |
+| Kafka UI | `http://<api_server_host>:8088`   | `components/kafka` or `components/all` | Requires `kafka.expose_dashboard_public = true` and the Docker-managed Kafka UI proxy on the remote host. |
+| Keycloak | `http://<api_server_host>:8080/`  | `components/keycloak` | Requires `keycloak.expose_public = true` and the matching Keycloak host-port mapping on the kind cluster. |
+| Grafana | `http://<api_server_host>:3000`   | `components/observability` or `components/all` | Requires `observability.expose_public = true` and the matching Grafana host-port mapping on the kind cluster. |
+| Prometheus | `http://<api_server_host>:9090`   | `components/observability` or `components/all` | Requires `observability.expose_public = true`, `observability.prometheus.enabled = true`, and the matching Prometheus host-port mapping on the kind cluster. |
 
 For the current example configuration this means:
 
