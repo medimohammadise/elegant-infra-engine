@@ -61,19 +61,6 @@ resource "helm_release" "kafka" {
         client = {
           protocol = "PLAINTEXT"
         }
-        external = {
-          protocol = "PLAINTEXT"
-        }
-        advertisedListeners = (
-          var.kafka.expose_public && var.api_server_host != null
-          ? "CLIENT://${var.kafka.release_name}-broker-headless.${var.namespace}.svc.cluster.local:9092,EXTERNAL://${var.api_server_host}:${var.kafka.external_host_port}"
-          : ""
-        )
-        securityProtocolMap = (
-          var.kafka.expose_public
-          ? "CLIENT:PLAINTEXT,CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
-          : ""
-        )
       }
       image = {
         registry   = var.kafka.image_registry
@@ -93,9 +80,6 @@ resource "helm_release" "kafka" {
           enabled = var.kafka.persistence_enabled
           size    = var.kafka.persistence_size
         }
-      }
-      externalAccess = {
-        enabled = var.kafka.expose_public
       }
     })
   ]
