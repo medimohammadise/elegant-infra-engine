@@ -11,6 +11,7 @@ locals {
   prometheus_enabled = try(var.prometheus.enabled, true)
   loki_enabled       = try(var.loki.enabled, false)
   tempo_enabled      = try(var.tempo.enabled, false)
+  alloy_enabled      = try(var.alloy.enabled, false)
 
   grafana_datasources = {
     apiVersion = 1
@@ -21,7 +22,7 @@ locals {
           uid       = "loki"
           type      = "loki"
           access    = "proxy"
-          url       = "http://${var.loki.release_name}.${var.namespace}.svc.cluster.local:3100"
+          url       = "http://${var.loki.release_name}-gateway.${var.namespace}.svc.cluster.local"
           isDefault = false
         }
       ] : [],
@@ -41,7 +42,7 @@ locals {
           uid       = "tempo"
           type      = "tempo"
           access    = "proxy"
-          url       = "http://${var.tempo.release_name}.${var.namespace}.svc.cluster.local:3100"
+          url       = "http://${var.tempo.release_name}.${var.namespace}.svc.cluster.local:3200"
           isDefault = !local.prometheus_enabled
           jsonData = {
             tracesToLogs = {
@@ -71,8 +72,26 @@ resource "helm_release" "loki" {
     yamlencode({
       deploymentMode = "SingleBinary"
       loki = {
+        auth_enabled = false
         commonConfig = {
           replication_factor = 1
+        }
+        storage = {
+          type = "filesystem"
+        }
+        schemaConfig = {
+          configs = [
+            {
+              from         = "2024-01-01"
+              store        = "tsdb"
+              object_store = "filesystem"
+              schema       = "v13"
+              index = {
+                prefix = "index_"
+                period = "24h"
+              }
+            }
+          ]
         }
       }
       singleBinary = {
@@ -125,6 +144,14 @@ resource "helm_release" "tempo" {
       tempo = {
         metricsGenerator = {
           enabled = var.tempo.metrics_generator_enabled
+        }
+        receivers = {
+          otlp = {
+            protocols = {
+              grpc = { endpoint = "0.0.0.0:4317" }
+              http = { endpoint = "0.0.0.0:4318" }
+            }
+          }
         }
       }
       persistence = {
@@ -213,6 +240,98 @@ resource "helm_release" "grafana" {
     helm_release.loki,
     helm_release.tempo,
     helm_release.prometheus,
+  ]
+
+  lifecycle {
+    replace_triggered_by = [terraform_data.recreate]
+  }
+}
+
+resource "helm_release" "alloy" {
+  count            = local.alloy_enabled ? 1 : 0
+  name             = var.alloy.release_name
+  repository       = var.alloy.chart_repository
+  chart            = var.alloy.chart_name
+  version          = var.alloy.chart_version
+  namespace        = var.namespace
+  create_namespace = false
+  timeout          = 600
+
+  values = [
+    yamlencode({
+      controller = {
+        type = "daemonset"
+      }
+      rbac = {
+        create = true
+      }
+      serviceAccount = {
+        create = true
+      }
+      alloy = {
+        configMap = {
+          content = <<-ALLOY
+            // Kubernetes pod log discovery
+            discovery.kubernetes "pods" {
+              role = "pod"
+            }
+
+            discovery.relabel "pod_logs" {
+              targets = discovery.kubernetes.pods.targets
+
+              rule {
+                source_labels = ["__meta_kubernetes_namespace"]
+                target_label  = "namespace"
+              }
+              rule {
+                source_labels = ["__meta_kubernetes_pod_name"]
+                target_label  = "pod"
+              }
+              rule {
+                source_labels = ["__meta_kubernetes_pod_container_name"]
+                target_label  = "container"
+              }
+              rule {
+                source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+                target_label  = "app"
+              }
+            }
+
+            loki.source.kubernetes "pods" {
+              targets    = discovery.relabel.pod_logs.output
+              forward_to = [loki.write.loki.receiver]
+            }
+
+            loki.write "loki" {
+              endpoint {
+                url = "http://${var.loki.release_name}-gateway.${var.namespace}.svc.cluster.local/loki/api/v1/push"
+              }
+            }
+
+            // OTLP receiver — accepts traces from instrumented apps
+            otelcol.receiver.otlp "default" {
+              grpc { endpoint = "0.0.0.0:4317" }
+              http { endpoint = "0.0.0.0:4318" }
+              output {
+                traces = [otelcol.exporter.otlp.tempo.input]
+              }
+            }
+
+            otelcol.exporter.otlp "tempo" {
+              client {
+                endpoint = "http://${var.tempo.release_name}.${var.namespace}.svc.cluster.local:4317"
+                tls { insecure = true }
+              }
+            }
+          ALLOY
+        }
+      }
+    })
+  ]
+
+  depends_on = [
+    helm_release.loki,
+    helm_release.tempo,
   ]
 
   lifecycle {

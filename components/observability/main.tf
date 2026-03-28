@@ -14,6 +14,7 @@ module "observability" {
   })
   loki  = var.observability.loki
   tempo = var.observability.tempo
+  alloy = var.observability.alloy
   prometheus = merge(var.observability.prometheus, {
     service_type = var.observability.expose_public ? "NodePort" : "ClusterIP"
     node_port    = var.observability.expose_public ? var.observability.prometheus_node_port : null
