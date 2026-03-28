@@ -65,6 +65,18 @@ variable "prometheus" {
   default     = {}
 }
 
+variable "alloy" {
+  type = object({
+    enabled          = optional(bool, false)
+    release_name     = optional(string, "alloy")
+    chart_repository = optional(string, "https://grafana.github.io/helm-charts")
+    chart_name       = optional(string, "alloy")
+    chart_version    = optional(string, null)
+  })
+  description = "Grafana Alloy collector settings."
+  default     = {}
+}
+
 variable "recreate_revision" {
   type        = string
   description = "Change this token to force replacement of observability Helm releases."

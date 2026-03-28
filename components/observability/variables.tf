@@ -62,6 +62,13 @@ variable "observability" {
       persistence      = optional(bool, false)
       persistence_size = optional(string, "10Gi")
     }), {})
+    alloy = optional(object({
+      enabled          = optional(bool, false)
+      release_name     = optional(string, "alloy")
+      chart_repository = optional(string, "https://grafana.github.io/helm-charts")
+      chart_name       = optional(string, "alloy")
+      chart_version    = optional(string, null)
+    }), {})
   })
   description = "Observability stack settings for Grafana, Loki, Tempo, and Prometheus."
   default     = {}
