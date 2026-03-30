@@ -4,19 +4,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repo Does
 
-Provisions a full developer platform on a **remote Docker host** (`myserver`) using Terraform. The stack includes: Docker registry, PostgreSQL, a `kind` Kubernetes cluster, Backstage (with Keycloak oauth2-proxy), Headlamp, Kafka + Kafka UI, Keycloak, Dependency-Track, and an observability stack (Grafana, Loki, Tempo, Prometheus).
+Provisions a full developer platform on a **remote Docker host** (`myserver`) using Terraform. The stack includes PostgreSQL, a `kind` Kubernetes cluster, Backstage (with Keycloak oauth2-proxy), Headlamp, Kafka + Kafka UI, Keycloak, and an observability stack (Grafana, Loki, Tempo, Prometheus). `components/infra` builds the shared infrastructure and exposes the kubeconfig, PostgreSQL connection, and host-port mappings that every app root consumes via `terraform_remote_state`.
 
 ## Repository Layout
 
 ```
-components/   Deployable Terraform roots (each has its own state)
+components/   Deployable Terraform roots (each maintains its own state)
+  infra/             Docker network, PostgreSQL, and `kind` cluster outputs shared with apps
+  postgres/          Optional root for PostgreSQL-only lifecycle
+  kind-cluster/      Optional root that manages the `kind` cluster independently
+  kubeconfigs/       Directory where `components/infra` writes kubeconfig files
+  backstage/         Backstage application root
+  headlamp/          Headlamp application root
+  kafka/             Kafka + Kafka UI application root
+  keycloak/          Keycloak application root
+  observability/     Observability stack application root
 modules/      Reusable Terraform modules (no providers, no state)
 scripts/      Helper scripts (post-render hooks, health checks, cluster manager)
 vendor/       Vendored Helm charts (e.g. Headlamp 0.40.1)
 specs/        Infrastructure specs/documentation
 ```
 
-`components/all` orchestrates the full stack from a single root. All other `components/*` are standalone roots for independent lifecycle management.
+`components/infra` is the entry point for infra provisioning, while each application root targets the existing infrastructure with its own `terraform.tfstate`. There is no combined `components/all` root in the refactored layout.
 
 ## Core Architecture Patterns
 
@@ -103,8 +112,12 @@ kubectl --kubeconfig=components/kubeconfigs/blitzinfra-kubeconfig \
 
 ### Check Live URLs
 ```bash
-terraform -chdir=components/all output exposed_urls
-terraform -chdir=components/<name> output exposed_urls
+terraform -chdir=components/infra output kubeconfig_path
+terraform -chdir=components/backstage output exposed_urls
+terraform -chdir=components/headlamp output exposed_urls
+terraform -chdir=components/kafka output exposed_urls
+terraform -chdir=components/keycloak output exposed_urls
+terraform -chdir=components/observability output exposed_urls
 ```
 
 ### Force Recreate a Deployment
@@ -147,3 +160,10 @@ The Docker-hosted PostgreSQL is reached by kind pods via the Docker bridge gatew
 ## Commit Conventions
 
 Semantic commits: `<type>: <summary>` where type is `feat`, `fix`, `docs`, `refactor`, or `chore`. Keep summaries short and imperative. See `CONTRIBUTING.md`.
+
+## Active Technologies
+- HCL (Terraform >= 1.0) + Terraform providers — kreuzwerker/docker ~> 3.0, hashicorp/kubernetes ~> 2.0, hashicorp/helm ~> 2.0, tehcyx/kind (003-platform-refactoring)
+- Terraform local state files (one per component root) (003-platform-refactoring)
+
+## Recent Changes
+- 003-platform-refactoring: Added HCL (Terraform >= 1.0) + Terraform providers — kreuzwerker/docker ~> 3.0, hashicorp/kubernetes ~> 2.0, hashicorp/helm ~> 2.0, tehcyx/kind

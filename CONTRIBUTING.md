@@ -10,9 +10,9 @@ Contributors should preserve the project architecture described in `README.md`. 
 
 - Keep deployable Terraform roots under `components/` and reusable building blocks under `modules/`.
 - Prefer implementing reusable behavior in `modules/` and wiring it into `components/` rather than duplicating infrastructure logic across multiple roots.
-- Keep `components/all` aligned with the standalone component roots when a capability is available in both places.
+- Preserve the split between the infra root (`components/infra`) and the standalone application roots. Keep the shared outputs aligned so that Keycloak, Grafana, Prometheus, and other services consume the expected host-port mappings.
 - Preserve the split between roots that create foundational infrastructure and roots that deploy into an existing cluster.
-- Treat `components/kind-cluster` and `components/all` as the roots that may create or modify the remote `kind` cluster and its host-port mappings.
+- Treat `components/infra` (and, when needed, `components/kind-cluster`) as the roots that may create or modify the remote `kind` cluster and its host-port mappings.
 - Treat `components/backstage`, `components/headlamp`, `components/keycloak`, and `components/observability` as roots that target an existing cluster unless explicitly reworked across the architecture.
 - Keep public exposure settings consistent end to end: component variables, kind host-port mappings, Terraform outputs, and operator documentation must all match.
 - Preserve the current service responsibilities in the observability stack:
@@ -37,7 +37,7 @@ Use semantic commit messages in the form:
 Examples:
 
 - `feat: observability`
-- `fix: restore components/all observability wiring`
+- `fix: realign infra observability outputs`
 - `docs: update README observability section`
 - `refactor: simplify module outputs`
 - `chore: refresh Terraform examples`

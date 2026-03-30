@@ -15,12 +15,12 @@ output "service_name" {
 
 output "keycloak_url" {
   description = "Configured Keycloak URL when publicly exposed."
-  value       = var.keycloak.expose_public && var.api_server_host != null ? "http://${var.api_server_host}:${var.keycloak.host_port}/" : null
+  value       = var.keycloak.expose_public && try(local.infra.api_server_host, "") != "" ? "http://${local.infra.api_server_host}:${var.keycloak.host_port}/" : null
 }
 
 output "exposed_urls" {
   description = "Consolidated Keycloak endpoints."
   value = {
-    keycloak = var.keycloak.expose_public && var.api_server_host != null ? "http://${var.api_server_host}:${var.keycloak.host_port}/" : null
+    keycloak = var.keycloak.expose_public && try(local.infra.api_server_host, "") != "" ? "http://${local.infra.api_server_host}:${var.keycloak.host_port}/" : null
   }
 }

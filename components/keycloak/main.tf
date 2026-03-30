@@ -1,3 +1,14 @@
+data "terraform_remote_state" "infra" {
+  backend = "local"
+  config = {
+    path = "${path.module}/../infra/terraform.tfstate"
+  }
+}
+
+locals {
+  infra = data.terraform_remote_state.infra.outputs
+}
+
 module "keycloak_namespace" {
   source = "../../modules/k8s-namespace"
 
@@ -15,11 +26,11 @@ module "keycloak" {
   node_port         = var.keycloak.expose_public ? var.keycloak.node_port : null
   admin_username    = var.keycloak.admin_username
   admin_password    = var.keycloak.admin_password
-  database_host     = var.postgres.host
-  database_port     = var.postgres.port
-  database_name     = var.postgres.db_name
-  database_user     = var.postgres.user
-  database_password = var.postgres.password
+  database_host     = data.terraform_remote_state.infra.outputs.postgres_host
+  database_port     = data.terraform_remote_state.infra.outputs.postgres_port
+  database_name     = data.terraform_remote_state.infra.outputs.postgres_db_name
+  database_user     = data.terraform_remote_state.infra.outputs.postgres_user
+  database_password = var.postgres_password
   recreate_revision = var.recreate_revision
 
   depends_on = [module.keycloak_namespace]

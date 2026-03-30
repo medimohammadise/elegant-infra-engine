@@ -15,12 +15,6 @@ keycloak = {
   admin_password   = "change-me"
 }
 
-postgres = {
-  host     = "host.docker.internal"
-  port     = 5432
-  db_name  = "keycloak"
-  user     = "keycloak"
-  password = "change-me"
-}
+postgres_password = "change-me"
 
 recreate_revision = ""

@@ -1,3 +1,10 @@
+data "terraform_remote_state" "infra" {
+  backend = "local"
+  config = {
+    path = "${path.module}/../infra/terraform.tfstate"
+  }
+}
+
 module "backstage_namespace" {
   source = "../../modules/k8s-namespace"
 
@@ -22,10 +29,10 @@ module "backstage" {
   public_node_port           = var.backstage.expose_public && var.backstage_auth_provider == "keycloak_proxy" ? var.backstage.node_port : null
   service_type               = var.backstage.expose_public && var.backstage_auth_provider != "keycloak_proxy" ? "NodePort" : "ClusterIP"
   node_port                  = var.backstage.expose_public && var.backstage_auth_provider != "keycloak_proxy" ? var.backstage.node_port : null
-  postgres_host              = var.postgres.host
-  postgres_port              = var.postgres.port
-  postgres_db_name           = var.postgres.db_name
-  postgres_user              = var.postgres.user
+  postgres_host              = data.terraform_remote_state.infra.outputs.postgres_host
+  postgres_port              = data.terraform_remote_state.infra.outputs.postgres_port
+  postgres_db_name           = data.terraform_remote_state.infra.outputs.postgres_db_name
+  postgres_user              = data.terraform_remote_state.infra.outputs.postgres_user
   postgres_password          = var.postgres.password
   recreate_revision          = var.recreate_revision
 

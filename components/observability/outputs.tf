@@ -10,14 +10,16 @@ output "grafana_release_name" {
 
 output "grafana_url" {
   description = "Configured Grafana URL when publicly exposed."
-  value       = var.observability.expose_public && var.api_server_host != null ? "http://${var.api_server_host}:${var.observability.grafana_host_port}" : null
+  value = var.observability.expose_public && try(local.infra.api_server_host, "") != ""
+    ? "http://${local.infra.api_server_host}:${var.observability.grafana_host_port}"
+    : null
 }
 
 output "prometheus_url" {
   description = "Configured Prometheus URL when publicly exposed."
   value = (
-    var.observability.expose_public && try(var.observability.prometheus.enabled, true) && var.api_server_host != null
-    ? "http://${var.api_server_host}:${var.observability.prometheus_host_port}"
+    var.observability.expose_public && try(var.observability.prometheus.enabled, true) && try(local.infra.api_server_host, "") != ""
+    ? "http://${local.infra.api_server_host}:${var.observability.prometheus_host_port}"
     : null
   )
 }
@@ -25,10 +27,10 @@ output "prometheus_url" {
 output "exposed_urls" {
   description = "Consolidated observability endpoints."
   value = {
-    grafana = var.observability.expose_public && var.api_server_host != null ? "http://${var.api_server_host}:${var.observability.grafana_host_port}" : null
+    grafana = var.observability.expose_public && try(local.infra.api_server_host, "") != "" ? "http://${local.infra.api_server_host}:${var.observability.grafana_host_port}" : null
     prometheus = (
-      var.observability.expose_public && try(var.observability.prometheus.enabled, true) && var.api_server_host != null
-      ? "http://${var.api_server_host}:${var.observability.prometheus_host_port}"
+      var.observability.expose_public && try(var.observability.prometheus.enabled, true) && try(local.infra.api_server_host, "") != ""
+      ? "http://${local.infra.api_server_host}:${var.observability.prometheus_host_port}"
       : null
     )
   }

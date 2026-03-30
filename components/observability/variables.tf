@@ -9,13 +9,6 @@ variable "cluster_name" {
   default     = "blitzinfra"
 }
 
-variable "api_server_host" {
-  type        = string
-  description = "Host name or IP exposed by the kind cluster for public services."
-  default     = null
-  nullable    = true
-}
-
 variable "observability" {
   type = object({
     namespace            = optional(string, "observability")

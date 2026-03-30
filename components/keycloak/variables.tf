@@ -32,15 +32,9 @@ variable "keycloak" {
   description = "Keycloak deployment settings."
 }
 
-variable "postgres" {
-  type = object({
-    host     = string
-    port     = number
-    db_name  = string
-    user     = string
-    password = string
-  })
-  description = "Existing PostgreSQL connection settings used by Keycloak."
+variable "postgres_password" {
+  type        = string
+  description = "Password for the PostgreSQL user Keycloak uses; other connection details come from the infra component via remote state."
   sensitive   = true
 }
 

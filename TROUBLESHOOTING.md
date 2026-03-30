@@ -57,19 +57,19 @@ The fix is persistent across reboots because it is stored in `/etc/sysctl.d/99-k
 From this repository, using the generated kubeconfig:
 
 ```bash
-KUBECONFIG=/Users/mehdi/MyProject/elegant-infra-engine/components/all/blitzinfra-kubeconfig \
+KUBECONFIG=/Users/mehdi/MyProject/elegant-infra-engine/components/kubeconfigs/blitzinfra-kubeconfig \
 kubectl -n kube-system delete pod -l k8s-app=kube-proxy
 ```
 
 ```bash
-KUBECONFIG=/Users/mehdi/MyProject/elegant-infra-engine/components/all/blitzinfra-kubeconfig \
+KUBECONFIG=/Users/mehdi/MyProject/elegant-infra-engine/components/kubeconfigs/blitzinfra-kubeconfig \
 kubectl -n kube-system rollout status ds/kube-proxy --timeout=120s
 ```
 
 Then verify system recovery:
 
 ```bash
-KUBECONFIG=/Users/mehdi/MyProject/elegant-infra-engine/components/all/blitzinfra-kubeconfig \
+KUBECONFIG=/Users/mehdi/MyProject/elegant-infra-engine/components/kubeconfigs/blitzinfra-kubeconfig \
 kubectl -n kube-system get pods -o wide
 ```
 
@@ -91,4 +91,4 @@ Expected results:
 
 - This issue affects the host-backed `NodePort` exposure path, not necessarily the application pods themselves.
 - If the host ports are healthy but the URLs are still unreachable from your workstation, check external firewall rules or network reachability to `myserver`.
-- If `kube-proxy` does not recover after the host sysctl fix, the next recovery option is to recreate the `kind` cluster from `components/kind-cluster` or `components/all`.
+- If `kube-proxy` does not recover after the host sysctl fix, the next recovery option is to recreate the `kind` cluster from `components/kind-cluster` or `components/infra`.
